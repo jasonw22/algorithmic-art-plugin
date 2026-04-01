@@ -1,0 +1,17 @@
+{
+  "name": "algorithmic-art",
+  "version": "1.0.0",
+  "description": "Create algorithmic art as standalone HTML files using p5.js, with interactive parameter controls and export. Covers fractals, flow fields, reaction-diffusion, cellular automata, strange attractors, tilings, and more.",
+  "author": {
+    "name": "Jason"
+  },
+  "license": "MIT",
+  "keywords": [
+    "generative-art",
+    "p5js",
+    "algorithmic",
+    "visualization",
+    "creative-coding",
+    "procedural"
+  ]
+}

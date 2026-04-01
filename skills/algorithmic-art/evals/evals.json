@@ -1,0 +1,23 @@
+{
+  "skill_name": "algorithmic-art",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a flow field visualization using Perlin noise with particles that leave colored trails",
+      "expected_output": "Standalone HTML file with p5.js flow field, interactive sliders, PNG/SVG export, concept explanation",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Make a Penrose tiling with a warm color palette",
+      "expected_output": "Standalone HTML file using SVG renderer with Penrose tiling, warm colors, interactive controls, PNG/SVG export",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Combine reaction-diffusion with a Truchet tile overlay",
+      "expected_output": "Standalone HTML file combining two techniques, concept explanation of the interaction, interactive parameters, export support",
+      "files": []
+    }
+  ]
+}

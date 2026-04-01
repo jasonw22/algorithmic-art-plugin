@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="sketch-title">Algorithmic Art</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e0e0e0; }
+
+  /* ---- Canvas ---- */
+  #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+  #canvas-container canvas { display: block; }
+
+  /* ---- Sidebar toggle ---- */
+  #sidebar-toggle {
+    position: fixed; top: 12px; right: 12px; z-index: 30;
+    background: rgba(30,30,30,0.7); color: #ccc; border: 1px solid #555;
+    width: 36px; height: 36px; border-radius: 6px; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  #sidebar-toggle:hover { background: rgba(60,60,60,0.9); }
+
+  /* ---- Sidebar ---- */
+  #sidebar {
+    position: fixed; top: 0; right: 0; z-index: 20;
+    width: 320px; height: 100vh; overflow-y: auto; overflow-x: hidden;
+    background: rgba(22,22,22,0.92); backdrop-filter: blur(12px);
+    border-left: 1px solid #333; padding: 16px;
+    transform: translateX(100%); transition: transform 0.25s ease;
+  }
+  #sidebar.open { transform: translateX(0); }
+
+  #sidebar h1 { font-size: 1.2em; color: #fff; margin-bottom: 4px; }
+  #sidebar .concept { font-size: 0.8em; color: #999; font-style: italic; margin-bottom: 16px; line-height: 1.4; }
+
+  /* ---- Sections ---- */
+  .ctrl-section { margin-bottom: 20px; }
+  .ctrl-section h3 {
+    font-size: 0.85em; font-weight: 600; color: #aaa; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #333;
+  }
+
+  /* ---- Controls ---- */
+  .ctrl-group { margin-bottom: 14px; }
+  .ctrl-group label { display: block; font-size: 0.8em; color: #ccc; margin-bottom: 4px; }
+  .ctrl-row { display: flex; align-items: center; gap: 10px; }
+
+  .ctrl-row input[type="range"] {
+    flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+    background: #444; border-radius: 2px; outline: none;
+  }
+  .ctrl-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    background: #d97757; border-radius: 50%; cursor: pointer;
+  }
+  .ctrl-row input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; background: #d97757;
+    border-radius: 50%; border: none; cursor: pointer;
+  }
+  .ctrl-val {
+    font-family: 'Courier New', monospace; font-size: 0.75em; color: #888;
+    min-width: 50px; text-align: right;
+  }
+
+  select.ctrl-select {
+    width: 100%; padding: 6px 8px; background: #2a2a2a; color: #ddd;
+    border: 1px solid #444; border-radius: 4px; font-size: 0.8em; cursor: pointer;
+  }
+
+  input[type="color"].ctrl-color {
+    width: 32px; height: 28px; border: 1px solid #444; border-radius: 4px;
+    background: none; padding: 0; cursor: pointer;
+  }
+  .color-hex { font-family: 'Courier New', monospace; font-size: 0.75em; color: #888; }
+
+  input[type="checkbox"].ctrl-check {
+    width: 16px; height: 16px; accent-color: #d97757; cursor: pointer;
+  }
+
+  /* ---- Seed controls ---- */
+  .seed-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .seed-input {
+    flex: 1; padding: 6px 8px; background: #2a2a2a; color: #ddd;
+    border: 1px solid #444; border-radius: 4px; font-family: 'Courier New', monospace;
+    font-size: 0.85em; text-align: center;
+  }
+  .seed-input:focus { outline: none; border-color: #d97757; }
+
+  /* ---- Buttons ---- */
+  .btn {
+    padding: 6px 12px; border: 1px solid #555; border-radius: 4px;
+    background: #333; color: #ddd; font-size: 0.8em; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #4a4a4a; }
+  .btn-accent { background: #d97757; border-color: #d97757; color: #fff; }
+  .btn-accent:hover { background: #c4613f; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-row .btn { flex: 1; text-align: center; }
+
+  /* ---- Bottom bar ---- */
+  #bottom-bar {
+    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 10;
+    display: flex; justify-content: center; gap: 8px; padding: 10px;
+    background: rgba(0,0,0,0.5);
+  }
+  #bottom-bar .btn { min-width: 80px; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+<button id="sidebar-toggle" title="Toggle controls">&#9776;</button>
+
+<!-- ── SIDEBAR ── -->
+<div id="sidebar">
+  <h1 id="display-title"></h1>
+  <div class="concept" id="display-concept"></div>
+
+  <!-- Seed section — always present -->
+  <div class="ctrl-section" id="section-seed">
+    <h3>Seed</h3>
+    <div class="seed-row">
+      <input type="number" class="seed-input" id="seed-input" value="12345">
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btn-seed-prev">&larr; Prev</button>
+      <button class="btn" id="btn-seed-next">Next &rarr;</button>
+      <button class="btn btn-accent" id="btn-seed-random">Random</button>
+    </div>
+  </div>
+
+  <!-- Parameter sections are generated here by the template engine -->
+  <div id="param-sections"></div>
+</div>
+
+<!-- ── BOTTOM BAR ── -->
+<div id="bottom-bar">
+  <button class="btn" id="btn-png">Export PNG</button>
+  <button class="btn" id="btn-svg">Export SVG</button>
+  <button class="btn" id="btn-pause">Pause</button>
+  <button class="btn" id="btn-reset">Reset</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DO NOT MODIFY ABOVE THIS LINE — TEMPLATE INFRASTRUCTURE
+// ═══════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 1: METADATA — Fill in for each piece
+// ═══════════════════════════════════════════════════════════════
+const SKETCH_META = {
+  title: "Untitled",
+  concept: "",
+  technique: "",
+  renderMode: "canvas"
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 2: PARAMETERS — Define interactive controls
+//
+// Each entry becomes a sidebar control, grouped into sections by "folder".
+// Supported types:
+//   Slider:   { value: 0.5, min: 0, max: 1, step: 0.01, label: "Name", folder: "Section" }
+//   Dropdown: { value: "opt1", options: ["opt1", "opt2"], label: "Name", folder: "Section" }
+//   Color:    { value: "#ff0000", type: "color", label: "Name", folder: "Section" }
+//   Boolean:  { value: true, label: "Name", folder: "Section" }
+//
+// The "folder" field groups controls into collapsible sidebar sections.
+// Controls without a folder go into a "General" section.
+// ═══════════════════════════════════════════════════════════════
+const PARAMS = {
+  // example: { value: 5, min: 1, max: 20, step: 1, label: "Count", folder: "Structure" }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 3: SKETCH LOGIC — Your algorithm goes here
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Called once during setup. Initialize data structures here.
+ * p.randomSeed() and p.noiseSeed() are already set from the seed control.
+ * @param {p5} p - The p5 instance
+ * @param {number} w - Canvas width
+ * @param {number} h - Canvas height
+ */
+function sketchSetup(p, w, h) {
+  // Your setup code
+}
+
+/**
+ * Called every frame.
+ * @param {p5} p - The p5 instance
+ * @param {number} w - Canvas width
+ * @param {number} h - Canvas height
+ * @param {Object} params - Current parameter values (use params.paramName)
+ */
+function sketchDraw(p, w, h, params) {
+  // Your draw code
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DO NOT MODIFY BELOW THIS LINE — TEMPLATE ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+(function () {
+  "use strict";
+
+  let p5Instance = null;
+  let isPaused = false;
+  // paramValues is global so sketch code can access it in both sketchSetup and sketchDraw
+  if (!window.paramValues) window.paramValues = {};
+  const paramValues = window.paramValues;
+  let canvasW, canvasH;
+  let currentSeed = 12345;
+
+  // --- Canvas size: fill viewport ---
+  function computeSize() {
+    return { w: window.innerWidth, h: window.innerHeight };
+  }
+
+  // --- Build sidebar controls from PARAMS ---
+  function buildControls() {
+    for (const key in PARAMS) paramValues[key] = PARAMS[key].value;
+
+    const container = document.getElementById("param-sections");
+    container.innerHTML = "";
+
+    // Group by folder
+    const folders = {};
+    for (const key in PARAMS) {
+      const folder = PARAMS[key].folder || "General";
+      if (!folders[folder]) folders[folder] = [];
+      folders[folder].push(key);
+    }
+
+    for (const folderName in folders) {
+      const section = document.createElement("div");
+      section.className = "ctrl-section";
+      section.innerHTML = `<h3>${folderName}</h3>`;
+
+      for (const key of folders[folderName]) {
+        const p = PARAMS[key];
+        const group = document.createElement("div");
+        group.className = "ctrl-group";
+
+        const label = p.label || key;
+
+        if (p.options) {
+          // Dropdown
+          const opts = p.options.map(o =>
+            `<option value="${o}"${o === p.value ? " selected" : ""}>${o}</option>`
+          ).join("");
+          group.innerHTML = `<label>${label}</label>
+            <select class="ctrl-select" data-key="${key}">${opts}</select>`;
+          group.querySelector("select").addEventListener("change", function() {
+            paramValues[key] = this.value;
+          });
+        } else if (p.type === "color") {
+          // Color picker
+          group.innerHTML = `<label>${label}</label>
+            <div class="ctrl-row">
+              <input type="color" class="ctrl-color" data-key="${key}" value="${p.value}">
+              <span class="color-hex" id="hex-${key}">${p.value}</span>
+            </div>`;
+          group.querySelector("input").addEventListener("input", function() {
+            paramValues[key] = this.value;
+            document.getElementById("hex-" + key).textContent = this.value;
+          });
+        } else if (typeof p.value === "boolean") {
+          // Checkbox
+          group.innerHTML = `<label>
+            <input type="checkbox" class="ctrl-check" data-key="${key}"${p.value ? " checked" : ""}> ${label}
+          </label>`;
+          group.querySelector("input").addEventListener("change", function() {
+            paramValues[key] = this.checked;
+          });
+        } else {
+          // Slider
+          group.innerHTML = `<label>${label}</label>
+            <div class="ctrl-row">
+              <input type="range" data-key="${key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">
+              <span class="ctrl-val" id="val-${key}">${p.value}</span>
+            </div>`;
+          group.querySelector("input").addEventListener("input", function() {
+            paramValues[key] = parseFloat(this.value);
+            document.getElementById("val-" + key).textContent = this.value;
+          });
+        }
+
+        section.appendChild(group);
+      }
+
+      container.appendChild(section);
+    }
+
+    // Add edge threshold for canvas-mode SVG export
+    if (SKETCH_META.renderMode === "canvas") {
+      paramValues._edgeThreshold = 60;
+    }
+  }
+
+  // --- Seed system ---
+  function applySeed(seed) {
+    currentSeed = seed;
+    document.getElementById("seed-input").value = seed;
+    if (p5Instance) p5Instance.remove();
+    createSketch();
+  }
+
+  // --- Edge detection (Sobel) for raster-to-vector fallback ---
+  function sobelEdgeDetect(imageData, width, height, threshold) {
+    const src = imageData.data;
+    const edges = new Uint8ClampedArray(width * height);
+    const gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+    const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        let sumX = 0, sumY = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const idx = ((y + ky) * width + (x + kx)) * 4;
+            const lum = 0.299 * src[idx] + 0.587 * src[idx + 1] + 0.114 * src[idx + 2];
+            const ki = (ky + 1) * 3 + (kx + 1);
+            sumX += lum * gx[ki];
+            sumY += lum * gy[ki];
+          }
+        }
+        edges[y * width + x] = Math.sqrt(sumX * sumX + sumY * sumY) > threshold ? 255 : 0;
+      }
+    }
+    return edges;
+  }
+
+  function edgesToSVGPaths(edges, width, height) {
+    const visited = new Uint8Array(width * height);
+    const paths = [];
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = y * width + x;
+        if (edges[idx] === 255 && !visited[idx]) {
+          const path = traceContour(edges, visited, x, y, width, height);
+          if (path.length > 2) paths.push(path);
+        }
+      }
+    }
+    return paths;
+  }
+
+  function traceContour(edges, visited, startX, startY, w, h) {
+    const path = [];
+    const dirs = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+    let x = startX, y = startY, dir = 0, steps = 0;
+    do {
+      path.push([x, y]);
+      visited[y * w + x] = 1;
+      let found = false;
+      for (let i = 0; i < 8; i++) {
+        const nd = (dir + 5 + i) % 8;
+        const nx = x + dirs[nd][0], ny = y + dirs[nd][1];
+        if (nx >= 0 && nx < w && ny >= 0 && ny < h && edges[ny * w + nx] === 255 && !visited[ny * w + nx]) {
+          x = nx; y = ny; dir = nd; found = true; break;
+        }
+      }
+      if (!found) break;
+      steps++;
+    } while ((x !== startX || y !== startY) && steps < w * h);
+    return path;
+  }
+
+  function pathsToSVG(paths, width, height) {
+    let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">';
+    svg += '<rect width="' + width + '" height="' + height + '" fill="#1a1a1a"/>';
+    for (const path of paths) {
+      if (path.length < 2) continue;
+      let d = "M" + path[0][0] + "," + path[0][1];
+      for (let i = 1; i < path.length; i++) d += "L" + path[i][0] + "," + path[i][1];
+      d += "Z";
+      svg += '<path d="' + d + '" fill="none" stroke="#ffffff" stroke-width="1"/>';
+    }
+    svg += "<\/svg>";
+    return svg;
+  }
+
+  // --- Export helpers ---
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function exportPNG() {
+    const canvas = document.querySelector("#canvas-container canvas");
+    if (!canvas) return;
+    canvas.toBlob(function(blob) {
+      if (blob) downloadBlob(blob, (SKETCH_META.title || "sketch") + "_seed" + currentSeed + ".png");
+    }, "image/png");
+  }
+
+  function exportSVG() {
+    const canvas = document.querySelector("#canvas-container canvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const imgData = ctx.getImageData(0, 0, canvasW, canvasH);
+    const threshold = paramValues._edgeThreshold || 60;
+    const edges = sobelEdgeDetect(imgData, canvasW, canvasH, threshold);
+    const paths = edgesToSVGPaths(edges, canvasW, canvasH);
+    const svgStr = pathsToSVG(paths, canvasW, canvasH);
+    const blob = new Blob([svgStr], { type: "image/svg+xml" });
+    downloadBlob(blob, (SKETCH_META.title || "sketch") + "_seed" + currentSeed + ".svg");
+  }
+
+  // --- p5 sketch ---
+  function createSketch() {
+    const size = computeSize();
+    canvasW = size.w;
+    canvasH = size.h;
+    isPaused = false;
+    document.getElementById("btn-pause").textContent = "Pause";
+
+    const sketch = function (p) {
+      p.setup = function () {
+        p.pixelDensity(1);
+        const cnv = p.createCanvas(canvasW, canvasH);
+        cnv.parent("canvas-container");
+        p.randomSeed(currentSeed);
+        p.noiseSeed(currentSeed);
+        sketchSetup(p, canvasW, canvasH);
+      };
+      p.draw = function () {
+        if (isPaused) return;
+        sketchDraw(p, canvasW, canvasH, paramValues);
+      };
+    };
+
+    p5Instance = new p5(sketch);
+  }
+
+  // --- Init ---
+  function init() {
+    document.getElementById("display-title").textContent = SKETCH_META.title;
+    document.getElementById("display-concept").textContent = SKETCH_META.concept;
+    document.getElementById("sketch-title").textContent = SKETCH_META.title + " \u2014 Algorithmic Art";
+
+    buildControls();
+    createSketch();
+
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    document.getElementById("sidebar-toggle").addEventListener("click", function() {
+      sidebar.classList.toggle("open");
+    });
+
+    // Seed controls
+    document.getElementById("seed-input").addEventListener("change", function() {
+      const v = parseInt(this.value);
+      if (v && v > 0) applySeed(v);
+    });
+    document.getElementById("btn-seed-prev").addEventListener("click", function() {
+      applySeed(Math.max(1, currentSeed - 1));
+    });
+    document.getElementById("btn-seed-next").addEventListener("click", function() {
+      applySeed(currentSeed + 1);
+    });
+    document.getElementById("btn-seed-random").addEventListener("click", function() {
+      applySeed(Math.floor(Math.random() * 999999) + 1);
+    });
+
+    // Export & control buttons
+    document.getElementById("btn-png").addEventListener("click", exportPNG);
+    document.getElementById("btn-svg").addEventListener("click", exportSVG);
+    document.getElementById("btn-pause").addEventListener("click", function() {
+      isPaused = !isPaused;
+      this.textContent = isPaused ? "Play" : "Pause";
+    });
+    document.getElementById("btn-reset").addEventListener("click", function() {
+      applySeed(currentSeed);
+    });
+
+    // Resize
+    window.addEventListener("resize", function() {
+      if (p5Instance) p5Instance.remove();
+      createSketch();
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>
