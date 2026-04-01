@@ -17,6 +17,7 @@ algorithmic and generative art. Organized by type.
 | *Chaos: Making a New Science* | James Gleick | Accessible introduction to chaos theory and strange attractors |
 | *Vehicles: Experiments in Synthetic Psychology* | Valentino Braitenberg | Simple agents, complex behavior — philosophical foundation for agent art |
 | *10 PRINT CHR$(205.5+RND(1)); : GOTO 10* | Montfort et al. | Deep analysis of one line of generative code — cultural and technical |
+| *Generative Design* | Groß, Bohnacker, Laub, Lazzeroni | Comprehensive creative coding reference — color, shape, type, image, noise, oscillation. Ported to nannou (see below) |
 
 ## Papers
 
@@ -44,6 +45,17 @@ algorithmic and generative art. Organized by type.
 - **The Book of Shaders** (thebookofshaders.com) — GPU-side procedural graphics (noise, patterns, SDF)
 - **Algorithmic Art** (algorithmicart.net) — Historical archive of early computer art
 - **Paul Bourke's Pages** (paulbourke.net) — Encyclopedic reference for fractals, attractors, and geometry
+- **nannou Examples** (github.com/nannou-org/nannou/tree/master/examples) — Official nannou
+  examples covering draw API, textures, blend modes, hi-res capture, wgpu compute shaders,
+  and templates. Essential reference for nannou-mode sketches.
+- **nannou Nature of Code** (github.com/nannou-org/nannou/tree/master/nature_of_code) — Rust
+  ports of Daniel Shiffman's *Nature of Code* examples: vectors, forces, oscillation, particle
+  systems, agents/steering, cellular automata, fractals, genetic algorithms. The canonical
+  reference for physics-based generative art in nannou.
+- **nannou Generative Design** (github.com/nannou-org/nannou/tree/master/generative_design) —
+  Rust ports of *Generative Design* book examples: color, shape, random/noise, oscillation
+  figures, dynamic data structures, image processing. Includes the definitive nannou
+  flow-field agent pattern (`m_1_5_04.rs`) and Lissajous figure generation (`m_2_5_02.rs`).
 
 ## Courses
 

@@ -97,3 +97,68 @@ organic, coral-like forms. Can be seeded from a point, line, or text outline.
   randomly and check adjacency to occupied cells. Use spatial indexing for performance.
 - Performance: 100-500 agents with trails is comfortable. For 1000+, skip rendering every
   other frame or reduce trail length.
+
+## nannou Implementation Notes
+
+**Steering behaviors** — The nannou Nature of Code examples implement Reynolds' steering
+behaviors with a clean Vehicle struct pattern:
+
+```rust
+struct Vehicle {
+    position: Vec2,
+    velocity: Vec2,
+    acceleration: Vec2,
+    max_speed: f32,
+    max_force: f32,
+    history: VecDeque<Vec2>,  // trail buffer
+}
+
+impl Vehicle {
+    fn apply_force(&mut self, force: Vec2) {
+        self.acceleration += force;  // add mass division here if needed
+    }
+
+    fn seek(&mut self, target: Vec2) {
+        let desired = (target - self.position).normalize() * self.max_speed;
+        let steer = (desired - self.velocity).clamp_length_max(self.max_force);
+        self.apply_force(steer);
+    }
+
+    fn update(&mut self) {
+        self.velocity = (self.velocity + self.acceleration).clamp_length_max(self.max_speed);
+        self.position += self.velocity;
+        self.acceleration *= 0.0;
+        // Trail history
+        self.history.push_back(self.position);
+        if self.history.len() > 100 { self.history.pop_front(); }
+    }
+}
+```
+
+**Trail rendering** — Use `VecDeque<Vec2>` for position history. Draw as a polyline or as
+individually colored points (fade alpha based on age):
+
+```rust
+if vehicle.history.len() > 1 {
+    let vertices = vehicle.history.iter().map(|v| (pt2(v.x, v.y), srgba(0.0, 0.0, 0.0, 1.0)));
+    draw.polyline().weight(1.0).points_colored(vertices);
+}
+```
+
+**Particle systems with forces** — The Nature of Code examples (`chp_04_systems/`) demonstrate
+the classic emitter + particle + force pattern in nannou:
+- `ParticleSystem` struct holds `Vec<Particle>` and an origin `Point2`
+- `apply_force(f: Vec2)` broadcasts a force to all particles
+- `apply_repeller(r: &Repeller)` computes inverse-square repulsion per particle
+- Update loop iterates in reverse for safe removal: `for i in (0..len).rev() { ... remove(i) }`
+- Particles have `life_span: f32` decremented each frame; draw with `rgba(r, g, b, life_span / 255.0)`
+
+**Organic growth with quadtree spatial indexing** — MacTuitui's `tree.rs` example demonstrates
+space-colonization growth: circular "Things" branch outward from a root, using a quadtree
+for efficient collision detection. Each Thing tracks parent/children indices, energy propagates
+from root to leaves, and new branches spawn at random angles biased by parent direction.
+This pattern is excellent for generative tree/coral/root structures.
+
+**Agent count**: nannou in release mode handles 2000+ agents with per-frame draw calls
+comfortably. For 10,000+ agents, consider the overlay/trail technique rather than drawing
+all trail history each frame.

@@ -67,3 +67,30 @@ Each maps a point to a new point; over millions of iterations, a fern emerges.
 - For deep zooms on Mandelbrot, consider reducing canvas size or using perturbation theory
   approximations — standard float64 loses precision around zoom 10^14.
 - Color mapping: map iteration count to HSB for smooth gradients.
+
+## nannou Implementation Notes
+
+- **Mandelbrot/Julia**: Render per-pixel to an `image::ImageBuffer`, then display as a
+  texture (same approach as reaction-diffusion). This is far faster than drawing individual
+  rectangles per pixel. See `references/nannou.md` for the texture-from-image pattern.
+- **L-systems**: Use nannou's transform chaining — `draw.x_y(x, y).rotate(angle)` — for
+  turtle graphics. Store the turtle state stack as `Vec<(Vec2, f32)>` for push/pop branching.
+  Draw segments with `draw.line().start(p1).end(p2).weight(w).color(c);`
+- **Recursive trees**: The Nature of Code fractal examples (`chp_08_fractals/`) demonstrate
+  basic recursive branching. For more sophisticated growth, see MacTuitui's `tree.rs` —
+  a space-colonization algorithm using quadtree spatial indexing for collision avoidance.
+
+### Space-Colonization / Organic Growth
+
+MacTuitui's `tree.rs` (in nannou's `examples/offline/`) demonstrates a sophisticated
+growth pattern useful for generative trees, corals, roots, and neural networks:
+
+- **Things** (nodes) grow outward from a root, branching probabilistically
+- Each node tracks `parent: Option<usize>` and `children: Vec<usize>` as indices
+- **Energy** propagates from root to leaves — nodes only grow when they have energy
+- **Quadtree** provides O(log n) spatial queries for collision detection
+- New branches spawn at angles biased by the parent-to-child direction, with controlled randomness
+- Growth terminates when a node collides with another or hits a boundary
+
+This produces organic, asymmetric branching structures — far more natural-looking than
+pure recursive L-systems. Combine with per-generation color mapping for depth visualization.

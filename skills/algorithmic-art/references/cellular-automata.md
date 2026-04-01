@@ -62,3 +62,33 @@ Grid of cells, alive or dead. Each frame:
   `mousePressed()` / `mouseDragged()` mapped to grid coordinates.
 - Seed patterns: random with configurable density, or classic structures
   (glider, glider gun, R-pentomino, acorn).
+
+## nannou Implementation Notes
+
+- Same double-buffered grid approach as p5.js, but use `Vec<u8>` or `Vec<i32>` for state.
+- For rendering, draw colored rectangles per cell: `draw.rect().x_y(wx, wy).w_h(size, size).color(c);`
+  In release mode, nannou batches draw calls — grids up to ~200x200 render smoothly this way.
+- For larger grids, render to an `image::ImageBuffer` and display as a texture (same approach
+  as reaction-diffusion — see `references/nannou.md`).
+
+**Hexagonal grids** — The nannou Nature of Code example (`7_hexagon_cells.rs`) demonstrates
+CA on hexagonal grids using `draw.polygon().points(hex_vertices)`:
+
+```rust
+let n_sides = 6;
+let points = (0..n_sides).map(|i| {
+    let phase = i as f32 / n_sides as f32;
+    let x = radius * (TAU * phase).cos();
+    let y = radius * (TAU * phase).sin();
+    pt2(x, y)
+});
+draw.polygon()
+    .x_y(cell_x, cell_y)
+    .color(fill)
+    .stroke(BLACK)
+    .points(points);
+```
+
+Hex grid layout: offset every other row by `1.5 * cell_width`. Row spacing is
+`sin(60°) * cell_width`. This produces visually richer CA than square grids — six
+neighbors instead of four (or eight with diagonals) creates different emergent dynamics.

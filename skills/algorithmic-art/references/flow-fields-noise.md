@@ -79,3 +79,50 @@ Produces swirling, marble-like distortions. Stack multiple layers for extreme wa
 - `p.noiseSeed()` with a fixed seed for reproducibility; expose seed as a parameter.
 - Use `p.noiseDetail(octaves, falloff)` to control built-in Perlin noise complexity.
 - Color: map particle age, speed, or position to color for visual richness.
+
+## nannou Implementation Notes
+
+The canonical nannou flow field pattern uses an **Agent struct** that tracks current and
+previous positions, moving through a 3D Perlin noise field (x, y for space, z for time):
+
+```rust
+use nannou::noise::{NoiseFn, Perlin, Seedable};
+
+struct Agent {
+    pos: Vec2,
+    pos_old: Vec2,
+    step_size: f32,
+    z_noise: f32,       // per-agent z offset for variation
+}
+
+impl Agent {
+    fn update(&mut self, noise: &Perlin, noise_scale: f64, noise_strength: f64) {
+        self.pos_old = self.pos;
+        self.z_noise += 0.01; // animate through noise z-axis
+
+        let angle = noise.get([
+            self.pos.x as f64 / noise_scale,
+            self.pos.y as f64 / noise_scale,
+            self.z_noise as f64,
+        ]) as f32 * noise_strength as f32;
+
+        self.pos.x += angle.cos() * self.step_size;
+        self.pos.y += angle.sin() * self.step_size;
+    }
+}
+```
+
+**Key patterns from the nannou Generative Design examples (`m_1_5_04.rs`):**
+- **Agent count**: 1000–5000 agents is comfortable in release mode
+- **Trail rendering**: Use the overlay technique — draw a semi-transparent rect each frame
+  instead of clearing (see `references/nannou.md` → Trail / Overlay Technique)
+- **Draw modes**: Toggle between line segments (`draw.line().start(old).end(new)`) and
+  ellipses (`draw.ellipse().xy(pos).radius(r)`) with keyboard shortcuts
+- **Wrapping**: When agents leave the window bounds, wrap to the opposite edge and reset
+  `pos_old` to avoid cross-screen streaks
+- **Per-agent variation**: Randomize `step_size`, `z_noise` offset, and color per agent.
+  Use `random_f32()` at creation time, not per-frame
+- **Color**: Assign HSL color based on a random value at agent creation. Use agent `z_noise`
+  or initial randomizer to split agents across two hue ranges for visual richness
+- **Blend modes**: `BLEND_ADD` with dark background creates glowing convergence effects.
+  Apply with `let draw = draw.color_blend(BLEND_ADD);`
