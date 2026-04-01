@@ -29,6 +29,8 @@ algorithmic and generative art. Organized by type.
 | "Simplex Noise Demystified" | Stefan Gustavson | 2005 | Clear explanation of simplex noise |
 | "Penrose Tiling" | Roger Penrose | 1974 | Aperiodic tiling |
 | "Multi-Scale Turing Patterns" | Jonathan McCabe | 2010 | Layered reaction-diffusion |
+| "Protrusion: Magnetic Fluid Sculpture" | Sachiko Kodama | 2008 | Ferrofluid art, magnetic field visualization |
+| "Anisotropic Diffusion in Image Processing" | Weickert | 1998 | Directional diffusion tensors, foundational for field-coupled RD |
 
 ## Websites & Online Resources
 

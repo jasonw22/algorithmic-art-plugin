@@ -51,6 +51,47 @@ Use a 3×3 convolution kernel for the discrete Laplacian:
 [0.05  0.2  0.05]
 ```
 
+### Anisotropic / Field-Coupled Diffusion
+
+The standard Gray-Scott model uses **isotropic** diffusion — chemicals spread equally in all
+directions. By coupling an external vector field (magnetic, gravitational, flow-based) to the
+diffusion tensor, patterns become **anisotropic** — stretching and aligning along field lines.
+
+This simulates phenomena like ferrofluids under magnetic fields, where Turing patterns elongate
+into filaments tracing the invisible field geometry.
+
+**Implementation:** Replace the isotropic Laplacian for chemical B with a directional blend:
+
+1. Compute the external field direction `(nx, ny)` and magnitude at each cell
+2. Compute directional second derivative **along** field lines:
+   `L_along = B(x+nx, y+ny) + B(x-nx, y-ny) - 2·B(x,y)` (bilinear sampling for sub-pixel)
+3. Compute directional second derivative **perpendicular** to field lines:
+   `L_perp = B(x-ny, y+nx) + B(x+ny, y-nx) - 2·B(x,y)`
+4. Blend with the isotropic Laplacian:
+   ```
+   effective = anisotropy * field_magnitude.min(1.0)
+   L_aniso = (1 + effective) · L_along + (1 - 0.5·effective) · L_perp
+   L_final = L_aniso · 0.5 + L_iso · (1 - effective)
+   ```
+
+**Optional drift/advection term:** Add a term that pushes chemical B along field lines using
+upwind differencing: `drift · (B_backward - B_forward) / 2`. This creates streaming effects
+where patterns flow toward or away from field sources.
+
+**Key parameters:**
+- `anisotropy` (0–1): How much the field warps diffusion direction. 0 = standard isotropic RD.
+- `drift` (0–1): How much the field advects the pattern chemical along its lines.
+- Field source positions and polarities (user-interactive placement works well)
+
+**Field sources:** Point monopoles are simplest — `B = strength · polarity · r̂ / (|r|² · scale + ε)`.
+Dipoles, quadrupoles, or Perlin-noise-based fields create different pattern geometries. Multiple
+sources with opposing polarity create rich saddle-point topologies.
+
+**Visual character:** Labyrinthine folds become directional filaments near poles; spots elongate
+into teardrops; worms align into parallel bundles following field lines. The effect is most
+dramatic with "Coral" and "Spots" presets where the base patterns have strong isotropic symmetry
+that the field visibly breaks.
+
 ### FitzHugh-Nagumo
 A simplified model of neural excitation. Produces spiral waves and traveling pulses.
 Two variables: activator (v) and inhibitor (w).
@@ -63,6 +104,9 @@ Two variables: activator (v) and inhibitor (w).
 - **Jonathan McCabe** — multi-scale Turing patterns, stunning organic textures
 - **Andy Lomas** — *Morphogenetic Creations*, 3D reaction-diffusion sculptures
 - **Sage Jenson** — biological simulation art, flowing organic forms
+- **Sachiko Kodama** — *Protrusion* series, ferrofluid sculpture under magnetic fields;
+  pioneered the use of magnetic fluids as a dynamic art medium, making invisible
+  magnetic field geometry visible through physical pattern formation
 
 ## p5.js Implementation Notes
 
