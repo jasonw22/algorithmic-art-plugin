@@ -1,24 +1,32 @@
 ---
 name: algorithmic-art
 description: >
-  Use this skill to produce standalone p5.js HTML files whenever a user wants visual art, beauty,
-  or aesthetic exploration through code and math. This is the default skill for ANY request where
-  the primary goal is creating something visually compelling through computation. Trigger for:
-  generative art, fractal explorers, beautiful cellular automata (Conway's Game of Life),
-  procedural patterns, particle animations, Penrose tilings, tessellations, flow fields, L-systems,
-  reaction-diffusion, strange attractors, Mandelbrot/Julia sets, kaleidoscopes, geometric patterns,
-  noise-based visuals, organic growth simulations, recursive subdivision, album/poster art from code,
-  animated backgrounds from particles/algorithms, interactive parameter-driven sketches, high-res
-  generative prints, and educational math visualizations. Also trigger when users want to make
-  something "look beautiful" or "cool" using algorithms, even without technical terminology.
-  Skip for: games with win/lose mechanics, GLSL/shader-only work, data dashboards, general
+  Use this skill to produce algorithmic art whenever a user wants visual art, beauty,
+  or aesthetic exploration through code and math. Supports five output modes: p5.js 2D (HTML),
+  Three.js 3D scene (HTML), Three.js GLSL shader (HTML), nannou 2D (Rust), or nannou 3D (Rust).
+  This is the default skill for ANY request where the primary goal is creating something visually
+  compelling through computation. Trigger for: generative art, fractal explorers, beautiful
+  cellular automata (Conway's Game of Life), procedural patterns, particle animations, Penrose
+  tilings, tessellations, flow fields, L-systems, reaction-diffusion, strange attractors,
+  Mandelbrot/Julia sets, kaleidoscopes, geometric patterns, noise-based visuals, organic growth
+  simulations, recursive subdivision, album/poster art from code, animated backgrounds from
+  particles/algorithms, interactive parameter-driven sketches, high-res generative prints,
+  educational math visualizations, 3D generative sculptures, raymarched fractals (Mandelbulb,
+  Menger sponge), volumetric rendering, SDF art, GLSL shader art, 3D particle systems, 3D
+  strange attractors, generative architecture, and procedural landscapes. Also trigger when
+  users want to make something "look beautiful" or "cool" using algorithms, even without
+  technical terminology. Skip for: games with win/lose mechanics, data dashboards, general
   web/UI design, or algorithm implementations focused on correctness not aesthetics.
 ---
 
 # Algorithmic Art
 
-Create algorithmic art as standalone HTML files using p5.js, with interactive parameter controls
-and both bitmap (PNG) and vector (SVG) export.
+Create algorithmic art in one of five output modes:
+- **p5.js** — standalone 2D HTML files with interactive parameter controls and PNG/SVG export
+- **Three.js Scene** — standalone 3D HTML files with scene graph, lighting, OrbitControls, and PNG export
+- **Three.js Shader** — standalone HTML files running a fullscreen GLSL fragment shader (raymarching, SDFs, fractals, volumetric)
+- **nannou 2D** — compiled Rust applications using [nannou](https://nannou.cc) for 2D creative coding
+- **nannou 3D** — compiled Rust applications using nannou with 3D perspective camera and wgpu
 
 Every piece of algorithmic art expresses an idea — a philosophy about emergence, order, chaos,
 nature, or perception. When creating a piece, always articulate the concept driving it, not just
@@ -27,6 +35,38 @@ the technique. The technique serves the idea.
 ## Workflow
 
 When a user requests algorithmic art:
+
+### 0. Choose the Output Mode
+
+**Before doing anything else**, ask the user which output format they want:
+
+1. **p5.js** (HTML, 2D) — Opens instantly in a browser. Best for interactive 2D parameter
+   exploration, quick iteration, and sharing via a single file. Includes a sidebar with live
+   controls, seed system, and PNG/SVG export.
+2. **Three.js Scene** (HTML, 3D) — Opens instantly in a browser. Best for 3D generative
+   sculptures, particle systems, instanced geometry, architectural forms, and any piece with
+   distinct 3D objects. Includes OrbitControls (mouse orbit/pan/zoom), sidebar with live
+   controls, seed system, and PNG export.
+3. **Three.js Shader** (HTML, 3D/GPU) — Opens instantly in a browser. Best for fullscreen GPU
+   effects: raymarched SDFs, 3D fractals (Mandelbulb, Menger sponge), volumetric rendering,
+   GPU reaction-diffusion, domain warping, and Shadertoy-style pieces. Same sidebar and seed
+   system. Requires GLSL knowledge.
+4. **nannou 2D** (Rust) — Compiled native app. Best for high-performance 2D rendering,
+   large-scale generative prints, and users who prefer Rust.
+5. **nannou 3D** (Rust) — Compiled native app. Best for high-performance 3D particle systems,
+   3D attractors, custom wgpu shader pipelines, and Rust-based 3D generative work.
+
+If the user has already specified a preference (e.g., "make me a nannou app", "p5.js sketch",
+"3D fractal", "raymarched"), skip the question and proceed with that mode. If the context makes
+one choice obvious, infer without asking:
+- "open in browser" / "HTML" → p5.js (2D) or Three.js (3D)
+- "Rust project" / "compiled" → nannou
+- "3D sculpture" / "3D particles" / "orbit camera" → Three.js Scene or nannou 3D
+- "raymarching" / "SDF" / "Mandelbulb" / "shader" / "GLSL" → Three.js Shader
+- "fractal" without "3D" → p5.js (2D); "3D fractal" → Three.js Shader
+
+The rest of this workflow applies to all modes. Sections specific to one mode are marked
+**[p5.js]**, **[Three.js Scene]**, **[Three.js Shader]**, **[nannou 2D]**, or **[nannou 3D]**.
 
 ### 1. Interpret the Request
 
@@ -44,6 +84,18 @@ Identify whether the request maps to a known algorithm family or requires someth
 | Recursion & subdivision | `recursion-subdivision.md` | Mondrian-style, quadtree, space partitioning, compositional hierarchy |
 | Generative agents & typography | `generative-agents.md` | Maeda, Reas, autonomous agents, flocking, steering behaviors |
 
+**Mode-specific references:**
+
+| Reference | Modes | Key Concepts |
+|-----------|-------|--------------|
+| `nannou.md` | nannou 2D | Rust/nannou API, coordinate system, noise, color, drawing primitives |
+| `threejs-3d.md` | Three.js Scene | Scene graph, geometry, materials, lighting, instanced meshes, particles, post-processing |
+| `shaders-glsl.md` | Three.js Shader | GLSL, SDFs, raymarching, 3D fractals, noise in GLSL, volumetric rendering, CSG operations |
+| `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
+
+All algorithm families above apply to all output modes — the family reference files describe
+the math, while the mode-specific references cover the implementation patterns for each platform.
+
 If the request references a technique not covered here, **search the web** for reference material,
 then save what you learn as a new `.md` file in `references/` following the same structure as the
 existing files. This skill grows over time.
@@ -60,6 +112,8 @@ If the user provides their own concept or philosophy, honor it and connect it to
 you choose.
 
 ### 3. Build the Sketch
+
+#### [p5.js] Build as 2D HTML
 
 Read the p5.js template at `assets/template.html`. This template must not be modified — it provides:
 - Full-viewport canvas that fills the browser window
@@ -117,6 +171,206 @@ function sketchDraw(p, width, height, params) { /* per-frame drawing */ }
 The template reads these and handles everything else — sidebar generation, seed management,
 export, resize. Do not add dat.gui or build custom HTML controls.
 
+#### [Three.js Scene] Build as 3D HTML
+
+Read the 3D template at `assets/template-3d.html`. This template must not be modified — it provides:
+- Full-viewport WebGL canvas via Three.js (ES modules via importmap)
+- **OrbitControls**: left-drag to rotate, scroll to zoom, right-drag to pan
+- Same sidebar control panel, seed system, and PNG export as the 2D template
+- `preserveDrawingBuffer: true`, ACES tone mapping, SRGB color space
+- `window.seededRandom()` — a mulberry32 PRNG seeded from the current seed
+- Proper scene disposal/rebuild on seed change or reset
+
+Set `renderMode: "scene"` in SKETCH_META. Copy the template and fill in three sections:
+
+```javascript
+const SKETCH_META = {
+  title: "Piece Title",
+  concept: "Brief philosophical description",
+  technique: "Algorithm family name",
+  renderMode: "scene"
+};
+
+const PARAMS = {
+  count: { value: 1000, min: 100, max: 10000, step: 100, label: "Object Count", folder: "Structure" },
+  // ... same format as 2D template
+};
+
+// Called once — add meshes, lights, helpers to scene.
+// Camera is a PerspectiveCamera at (0, 0, 5). Reposition as needed.
+// Return a state object for use in sceneAnimate (or undefined).
+function sceneSetup(THREE, scene, camera, renderer, params, seed) { }
+
+// Called every frame. time = elapsed seconds, delta = frame delta.
+function sceneAnimate(THREE, scene, camera, state, params, time, delta) { }
+```
+
+See `references/threejs-3d.md` for geometry, materials, lighting, instanced meshes,
+particles, post-processing, and common 3D generative patterns.
+
+#### [Three.js Shader] Build as GLSL Shader HTML
+
+Uses the same 3D template (`assets/template-3d.html`) with `renderMode: "shader"`.
+The template renders a fullscreen quad and passes your fragment shader via ShaderMaterial.
+
+```javascript
+const SKETCH_META = {
+  title: "Piece Title",
+  concept: "Brief philosophical description",
+  technique: "Algorithm family name",
+  renderMode: "shader"
+};
+
+const PARAMS = {
+  power: { value: 8.0, min: 2, max: 16, step: 0.1, label: "Fractal Power", folder: "Structure" },
+  // ...
+};
+
+// Return custom uniforms. The template automatically provides:
+//   u_time (float), u_resolution (vec2), u_mouse (vec2), u_seed (float)
+function shaderUniforms(params, seed) {
+  return {
+    u_power: { value: params.power },
+  };
+}
+
+// Return a GLSL fragment shader string.
+function fragmentShader() {
+  return `
+    uniform float u_time;
+    uniform vec2 u_resolution;
+    uniform float u_power;
+    void main() {
+      vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / u_resolution.y;
+      // ... raymarching, SDF, fractal logic ...
+      gl_FragColor = vec4(color, 1.0);
+    }
+  `;
+}
+
+// Optional: sync custom uniforms to param changes per frame.
+function shaderAnimate(uniforms, params, time) {
+  uniforms.u_power.value = params.power;
+}
+```
+
+See `references/shaders-glsl.md` for SDF primitives, CSG operations, raymarching,
+3D fractals (Mandelbulb, Menger sponge), noise in GLSL, volumetric effects, and palettes.
+
+#### [nannou 2D] Build as Rust Project
+
+Read the nannou project template at `assets/nannou-template/`. Create a new Cargo project
+directory for the piece. The project structure is:
+
+```
+piece-name/
+├── Cargo.toml
+├── src/
+│   └── main.rs
+└── README.md        (optional — brief run instructions)
+```
+
+See `references/nannou.md` for the full nannou reference including API patterns, coordinate
+system, color handling, noise, and export. The key structure of a nannou sketch:
+
+```rust
+use nannou::prelude::*;
+use nannou::noise::{NoiseFn, Perlin, Seedable};
+
+struct Model {
+    // Piece state — algorithm data, parameters, cached geometry
+}
+
+fn main() {
+    nannou::app(model).update(update).run();
+}
+
+fn model(app: &App) -> Model {
+    app.new_window()
+        .size(1200, 800)
+        .title("Piece Title")
+        .view(view)
+        .key_pressed(key_pressed)
+        .build()
+        .unwrap();
+
+    Model {
+        // Initialize state
+    }
+}
+
+fn update(_app: &App, model: &mut Model, _update: Update) {
+    // Per-frame state updates — advance simulation, respond to parameter changes
+}
+
+fn view(app: &App, model: &Model, frame: Frame) {
+    let draw = app.draw();
+    draw.background().color(BLACK);
+
+    // Drawing code — use draw.ellipse(), draw.line(), draw.polyline(), etc.
+
+    draw.to_frame(app, &frame).unwrap();
+}
+
+fn key_pressed(app: &App, model: &mut Model, key: Key) {
+    match key {
+        Key::S => app.main_window().capture_frame(format!(
+            "{}_{}.png",
+            app.exe_name().unwrap(),
+            app.elapsed_frames()
+        )),
+        Key::R => { /* reset state */ }
+        Key::Space => { /* pause/resume */ }
+        _ => {}
+    }
+}
+```
+
+**nannou conventions:**
+- Parameters live as fields on the `Model` struct. Use keyboard controls to adjust them at
+  runtime (arrow keys, number keys, etc.). Document the key bindings in a `println!` at startup.
+- Seed system: store a `seed: u32` field on Model. Use `Key::N` for next seed, `Key::P` for
+  previous, `Key::R` for random. Apply via `Perlin::new().set_seed(model.seed)` and
+  nannou's `random_range` with seeded RNG.
+- Export: `Key::S` captures the current frame as PNG. For high-res export, render to a
+  texture at a multiple of the window size, then save that.
+- The coordinate system is centered at (0, 0) with y-up. Window dimensions are
+  `app.window_rect().w()` and `.h()`.
+- Use `nannou::noise` (re-exported from the `noise` crate) for Perlin/Simplex noise.
+- Use `nannou::color` (re-exported from `palette` crate) for color — supports `hsla`, `rgba`,
+  `Srgba`, `LinSrgba`, named colors, and conversions between them.
+
+**Cargo.toml template:**
+```toml
+[package]
+name = "piece-name"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nannou = "0.19"
+```
+
+After creating the project, tell the user to run it with `cargo run` (or `cargo run --release`
+for better performance). Note that the first build will take a few minutes to compile nannou's
+dependencies.
+
+#### [nannou 3D] Build as 3D Rust Project
+
+Same project structure as nannou 2D, but with a 3D perspective camera and 3D drawing.
+See `references/nannou-3d.md` for the full 3D reference.
+
+Key differences from nannou 2D:
+- Build a perspective view matrix manually (`Mat4::look_at_rh` + `Mat4::perspective_rh`)
+  and apply it via `draw.transform(matrix)`. See `nannou-3d.md` for the
+  `perspective_view_matrix` helper.
+- Add camera state to the Model: `camera_angle`, `camera_distance`, `camera_height`.
+  Use arrow keys and +/- for camera control.
+- Use `x_y_z()` and `pt3()` for 3D positioning of shapes.
+- Use `.rotate_x()`, `.rotate_y()`, `.rotate_z()` for 3D rotation.
+- For advanced 3D (custom lighting, real meshes), use custom wgpu pipelines with WGSL shaders.
+- Add `glam = "0.24"` to Cargo.toml for matrix/quaternion math if needed.
+
 ### 5. Design Parameters
 
 Parameters are the user's creative controls — and also the piece's vocabulary. Name parameters
@@ -154,9 +408,14 @@ state should be the "hero" view of the piece.
 When presenting the finished piece, include:
 1. **Title and concept** — what idea the piece expresses
 2. **Technique breakdown** — what algorithms are at work and why they were chosen
-3. **Parameter guide** — what each slider does and interesting ranges to explore
+3. **Parameter guide** — **[p5.js / Three.js]** what each sidebar control does and interesting
+   ranges to explore; **[nannou]** what each keyboard shortcut does and interesting parameter values
 4. **Art historical context** — connections to artists, movements, or foundational work
-5. **The HTML file** — saved and ready to open in a browser
+5. **The output** — **[p5.js / Three.js]** the HTML file, saved and ready to open in a browser;
+   **[nannou]** the Cargo project directory, with `cargo run` instructions and a note that
+   the first build compiles dependencies (~2-5 min)
+6. **[Three.js Scene]** Note the mouse controls: left-drag to orbit, scroll to zoom, right-drag to pan
+7. **[Three.js Shader]** Explain what the shader does conceptually — raymarching, SDF construction, etc.
 
 ## Combining Techniques
 

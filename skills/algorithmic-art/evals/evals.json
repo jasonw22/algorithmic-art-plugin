@@ -18,6 +18,24 @@
       "prompt": "Combine reaction-diffusion with a Truchet tile overlay",
       "expected_output": "Standalone HTML file combining two techniques, concept explanation of the interaction, interactive parameters, export support",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Create a 3D generative sculpture made of thousands of small spheres arranged by noise, with orbit controls",
+      "expected_output": "Standalone HTML file using Three.js Scene mode (template-3d.html with renderMode 'scene'), InstancedMesh for performance, OrbitControls, lighting, sidebar with count/noise/color parameters, PNG export, concept explanation",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Make a raymarched Mandelbulb fractal I can explore in the browser",
+      "expected_output": "Standalone HTML file using Three.js Shader mode (template-3d.html with renderMode 'shader'), GLSL fragment shader with Mandelbulb SDF and raymarcher, sidebar controls for power/iterations/palette, animated camera or mouse-driven view, PNG export, concept explanation",
+      "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Build a 3D Lorenz attractor visualization as a compiled Rust app with camera controls",
+      "expected_output": "nannou 3D Cargo project with Lorenz attractor rendered as colored polyline or point cloud, manual perspective camera with keyboard orbit controls, seed system, PNG capture, key bindings printed at startup, concept explanation",
+      "files": []
     }
   ]
 }
