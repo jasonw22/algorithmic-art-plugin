@@ -79,3 +79,52 @@ Dissipation parameter b controls complexity. Near b=0.2, produces beautiful 3D k
 - Reset: provide a button to clear and re-randomize starting point.
 - Performance: `p.noStroke()` + `p.fill()` + `p.rect(x,y,1,1)` is often faster than `p.point()`.
   Or use `pixels[]` directly for maximum throughput.
+
+## Functional Iteration Pattern
+
+The thi.ng/transducers ecosystem models attractor iteration as composable functional pipelines
+rather than imperative loops:
+
+```javascript
+// Attractor as a pure function: state → next_state
+function cliffordStep(a, b, c, d) {
+  return ([x, y]) => [
+    Math.sin(a * y) + c * Math.cos(a * x),
+    Math.sin(b * x) + d * Math.cos(b * y),
+  ];
+}
+
+// Generate N points as a lazy sequence
+function* attractorSequence(stepFn, start, n) {
+  let state = start;
+  for (let i = 0; i < n; i++) {
+    state = stepFn(state);
+    yield state;
+  }
+}
+
+// Collect points as data, then render (enables both Canvas and SVG output)
+const step = cliffordStep(a, b, c, d);
+const points = [...attractorSequence(step, [0.1, 0.1], 100000)];
+```
+
+This separation of iteration from rendering allows:
+- **Density histogram**: accumulate point counts into a 2D grid, then color by density
+  for high-quality attractor visualization (more precise than low-alpha point plotting)
+- **SVG export**: convert point cloud to SVG circles or a density-mapped raster
+- **Parameter sweeps**: generate multiple attractors with different parameters in one pass
+
+## Perceptual Color for Attractors
+
+Point-cloud attractors benefit greatly from perceptual color mapping:
+
+- **Density → color**: accumulate points into a 2D histogram, then map density through a
+  cosine gradient or Oklab multi-stop gradient. Low density = dark/cool, high density =
+  bright/warm. Using Oklab ensures the brightness gradient is perceptually linear.
+- **Velocity → color**: compute `|state(n+1) - state(n)|` per point, map speed to palette.
+  Fast-moving regions (near repelling fixed points) get one color, slow regions (near
+  attracting manifolds) get another.
+- **Position → color**: map x, y, or angle from origin to palette for spatial color variation.
+
+See `references/color-science.md` for cosine gradient presets, Oklab conversion functions,
+and LCH theme generation.

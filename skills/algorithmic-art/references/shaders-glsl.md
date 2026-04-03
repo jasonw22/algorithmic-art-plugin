@@ -527,6 +527,193 @@ Without this, shaders will only fill a fraction of the canvas on high-DPI screen
 - Precompute expensive values outside loops when possible
 - For animated fractals, use lower iteration counts and compensate with post-processing
 
+## Easing & Oscillator Functions
+
+Useful for animation, transitions, and cyclic effects:
+
+```glsl
+// Easing functions
+float easeInQuad(float t) { return t * t; }
+float easeOutQuad(float t) { return t * (2.0 - t); }
+float easeInOutQuad(float t) { return t < 0.5 ? 2.0*t*t : -1.0 + (4.0-2.0*t)*t; }
+float easeInCubic(float t) { return t * t * t; }
+float easeOutCubic(float t) { float f = t-1.0; return f*f*f + 1.0; }
+float easeInOutCubic(float t) {
+  return t < 0.5 ? 4.0*t*t*t : (t-1.0)*(2.0*t-2.0)*(2.0*t-2.0) + 1.0;
+}
+float easeInExpo(float t) { return t == 0.0 ? 0.0 : pow(2.0, 10.0*(t-1.0)); }
+float easeOutExpo(float t) { return t == 1.0 ? 1.0 : 1.0-pow(2.0, -10.0*t); }
+
+// Oscillators (return 0–1, period = 1.0)
+float sinOsc(float t) { return 0.5 + 0.5 * sin(t * 6.28318); }
+float triOsc(float t) { return abs(2.0 * fract(t) - 1.0); }
+float sawOsc(float t) { return fract(t); }
+float sqrOsc(float t) { return step(0.5, fract(t)); }
+```
+
+## GPU Hash Functions (PRNGs)
+
+Stateless hash functions for per-pixel randomness — faster than noise for non-correlated values:
+
+```glsl
+// High-quality 1D hash (Dave Hoskins)
+float hash11(float p) {
+  p = fract(p * 0.1031);
+  p *= p + 33.33;
+  p *= p + p;
+  return fract(p);
+}
+
+// 2D → 1D hash
+float hash21(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+
+// 2D → 2D hash (for Voronoi, jittered grids)
+vec2 hash22(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.xx + p3.yz) * p3.zy);
+}
+
+// 3D → 1D hash (for volumetric / 3D noise)
+float hash31(vec3 p) {
+  p = fract(p * 0.1031);
+  p += dot(p, p.zyx + 31.32);
+  return fract((p.x + p.y) * p.z);
+}
+```
+
+## Lighting Models
+
+```glsl
+// Lambert diffuse
+float lambert(vec3 n, vec3 l) {
+  return max(dot(n, l), 0.0);
+}
+
+// Blinn-Phong specular
+float blinnPhong(vec3 n, vec3 l, vec3 v, float shininess) {
+  vec3 h = normalize(l + v);
+  return pow(max(dot(n, h), 0.0), shininess);
+}
+
+// Fresnel (Schlick approximation)
+float fresnel(vec3 n, vec3 v, float f0) {
+  return f0 + (1.0 - f0) * pow(1.0 - max(dot(n, v), 0.0), 5.0);
+}
+
+// Simple hemisphere ambient
+vec3 hemisphereLight(vec3 n, vec3 skyColor, vec3 groundColor) {
+  float t = 0.5 + 0.5 * n.y;
+  return mix(groundColor, skyColor, t);
+}
+```
+
+## Fog Functions
+
+```glsl
+// Linear fog
+vec3 fogLinear(vec3 color, vec3 fogColor, float dist, float start, float end) {
+  float f = clamp((end - dist) / (end - start), 0.0, 1.0);
+  return mix(fogColor, color, f);
+}
+
+// Exponential fog (more natural)
+vec3 fogExp(vec3 color, vec3 fogColor, float dist, float density) {
+  float f = exp(-dist * density);
+  return mix(fogColor, color, f);
+}
+
+// Exponential squared fog (sharper horizon)
+vec3 fogExp2(vec3 color, vec3 fogColor, float dist, float density) {
+  float f = exp(-pow(dist * density, 2.0));
+  return mix(fogColor, color, f);
+}
+```
+
+## Porter-Duff Blending
+
+For compositing layers in multi-pass shaders:
+
+```glsl
+// Premultiplied alpha blending modes
+vec4 blendOver(vec4 src, vec4 dst) {
+  return src + dst * (1.0 - src.a);
+}
+
+vec4 blendAdd(vec4 src, vec4 dst) {
+  return min(src + dst, 1.0);
+}
+
+vec4 blendMultiply(vec4 src, vec4 dst) {
+  return src * dst + src * (1.0 - dst.a) + dst * (1.0 - src.a);
+}
+
+vec4 blendScreen(vec4 src, vec4 dst) {
+  return src + dst - src * dst;
+}
+```
+
+## Additional SDF Operators
+
+Beyond the basic smooth union/subtract in the SDF section above:
+
+```glsl
+// Smooth intersection
+float opSmoothIntersect(float d1, float d2, float k) {
+  float h = clamp(0.5 - 0.5 * (d2 - d1) / k, 0.0, 1.0);
+  return mix(d2, d1, h) + k * h * (1.0 - h);
+}
+
+// Chamfer union (flat bevel at junction)
+float opChamferUnion(float d1, float d2, float r) {
+  return min(min(d1, d2), (d1 - r + d2) * 0.707107);
+}
+
+// Stairs union (stepped profile at junction)
+float opStairsUnion(float d1, float d2, float r, float n) {
+  float s = r / n;
+  float u = d2 - r;
+  return min(min(d1, d2), 0.5 * (u + d1 + abs(mod(u - d1 + s, 2.0*s) - s)));
+}
+
+// Round cone (useful for organic forms)
+float sdRoundCone(vec3 p, float r1, float r2, float h) {
+  vec2 q = vec2(length(p.xz), p.y);
+  float b = (r1 - r2) / h;
+  float a = sqrt(1.0 - b*b);
+  float k = dot(q, vec2(-b, a));
+  if (k < 0.0) return length(q) - r1;
+  if (k > a*h) return length(q - vec2(0, h)) - r2;
+  return dot(q, vec2(a, b)) - r1;
+}
+
+// Elongation (stretch a shape along an axis)
+vec3 opElongate(vec3 p, vec3 h) {
+  vec3 q = abs(p) - h;
+  return max(q, 0.0) + min(max(q.x, max(q.y, q.z)), 0.0);
+}
+
+// Onion (hollow out a shape — shell of thickness t)
+float opOnion(float d, float t) {
+  return abs(d) - t;
+}
+
+// Round (add rounding to any SDF)
+float opRound(float d, float r) {
+  return d - r;
+}
+```
+
+## 2D SDF Reference
+
+For 2D signed distance fields (used in both shader mode and CPU-based p5.js compositions),
+see `references/sdf-2d.md` which covers 2D primitives, boolean operators, domain operations
+(repetition, polar symmetry, mirroring), and rendering techniques.
+
 ## Key References
 
 - **Inigo Quilez** (iq) — [iquilezles.org/articles](https://iquilezles.org/articles/) —
@@ -534,3 +721,6 @@ Without this, shaders will only fill a fraction of the canvas on high-DPI screen
 - **Shadertoy** — massive community gallery of fragment shaders
 - **The Book of Shaders** — beginner-friendly GLSL tutorial
 - **Mercury SDF library** — comprehensive collection of SDF operations
+- **thi.ng/shader-ast-stdlib** — ~230 portable shader functions (noise, SDF, lighting,
+  easing, oscillators, blending) — TypeScript source, cross-compiles to GLSL or JavaScript
+- **Dave Hoskins' Hash Functions** — GPU hash/PRNG implementations used throughout Shadertoy

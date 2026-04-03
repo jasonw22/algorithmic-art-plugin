@@ -126,3 +126,36 @@ impl Agent {
   or initial randomizer to split agents across two hue ranges for visual richness
 - **Blend modes**: `BLEND_ADD` with dark background creates glowing convergence effects.
   Apply with `let draw = draw.color_blend(BLEND_ADD);`
+
+## Perceptual Color for Flow Fields
+
+Flow field aesthetics improve dramatically with perceptual color mapping:
+
+- **Cosine gradients** (see `references/color-science.md`) produce infinitely smooth palettes
+  from 4 coefficient vectors — ideal for mapping particle age or distance to color.
+- **Oklab interpolation** prevents the muddy midpoints that sRGB interpolation produces when
+  blending between distant hues (e.g., red → blue trails passing through vivid purple instead
+  of gray).
+- **LCH theme generation** constrains palette variety to a perceptual range — use narrow hue
+  ranges (±15°) for calm, monochromatic fields or wide ranges (±60°) for vibrant compositions.
+
+Map color to particle properties:
+```javascript
+// Map particle cumulative distance to cosine palette
+const t = particle.totalDistance / maxExpectedDistance;
+const [r, g, b] = cosinePalette(t, palette.a, palette.b, palette.c, palette.d);
+p.stroke(r * 255, g * 255, b * 255, trailAlpha);
+```
+
+## Functional Composition Pattern
+
+The thi.ng ecosystem demonstrates a functional alternative to the imperative agent loop.
+Instead of mutable agent objects, model the flow field as a composable pipeline:
+
+1. **Field function**: `(x, y, t) → angle` — pure function, no state
+2. **Particle step**: `(position, field) → newPosition` — deterministic transform
+3. **Trail accumulation**: collect positions into polylines as data
+4. **Rendering**: draw polylines from data (enables both Canvas and SVG output)
+
+This separation of data from rendering makes SVG export trivial — the same trail data that
+draws to canvas can construct SVG `<polyline>` elements directly.

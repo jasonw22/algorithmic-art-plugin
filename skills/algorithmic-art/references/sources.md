@@ -70,6 +70,27 @@ algorithmic and generative art. Organized by type.
 - **Processing Forum** (discourse.processing.org) — Official Processing/p5.js community
 - **fxhash** (fxhash.xyz) — Generative art NFT platform with open-source sketches
 
+## Toolkits & Ecosystems
+
+- **thi.ng/umbrella** (github.com/thi-ng/umbrella) — Karsten Schmidt's monorepo of 214+
+  composable TypeScript packages for functional creative coding. Key art-relevant packages:
+  `@thi.ng/geom` (2D/3D geometry), `@thi.ng/color` (16 color spaces, cosine gradients,
+  LCH theme generation), `@thi.ng/geom-sdf` (2D signed distance fields with smooth booleans),
+  `@thi.ng/geom-tessellate` (9 composable tessellation algorithms), `@thi.ng/shader-ast`
+  (write shaders in TypeScript, cross-compile to GLSL/JS), `@thi.ng/shader-ast-stdlib`
+  (~230 portable shader functions), `@thi.ng/random` (seedable PRNGs, distributions).
+  ~185 example projects demonstrating generative art techniques.
+- **thi.ng/genart-api** (github.com/thi-ng/genart-api) — Platform-independent API for
+  browser-based generative art. Decouples artworks from presentation platforms (fx(hash),
+  EditArt, personal sites) via pluggable adapters. Defines a sophisticated parameter system
+  (17 types including Ramp, WeightedChoice, XY, Vector, Image), seedable PRNG architecture,
+  state machine, and offline rendering for video export. Valuable as an architecture reference
+  for parameter design and platform-independent art.
+- **Karsten Schmidt (toxi)** (toxi.co) — Veteran creative coder and generative artist.
+  Creator of toxiclibs (Java, used extensively in Processing community), thi.ng (TypeScript/
+  Clojure), and author of influential work on functional approaches to computational geometry,
+  SDF composition, and perceptual color science.
+
 ---
 
 *When adding new techniques to this skill, also add relevant sources here.*

@@ -84,13 +84,21 @@ Identify whether the request maps to a known algorithm family or requires someth
 | Recursion & subdivision | `recursion-subdivision.md` | Mondrian-style, quadtree, space partitioning, compositional hierarchy |
 | Generative agents & typography | `generative-agents.md` | Maeda, Reas, autonomous agents, flocking, steering behaviors |
 
+**Cross-cutting references** (applicable to all algorithm families and output modes):
+
+| Reference | Key Concepts |
+|-----------|--------------|
+| `color-science.md` | Perceptual color spaces (Oklab, LCH), cosine gradients, LCH theme generation, harmonic schemes, perceptual interpolation |
+| `sdf-2d.md` | 2D signed distance fields, smooth boolean operators, domain repetition/mirroring/polar symmetry, anti-aliased rendering |
+| `thi-ng-ecosystem.md` | Functional creative coding patterns, composable tessellation, data-driven geometry, multi-target rendering, GenArt API parameter design |
+
 **Mode-specific references:**
 
 | Reference | Modes | Key Concepts |
 |-----------|-------|--------------|
 | `nannou.md` | nannou 2D | Rust/nannou API, coordinate system, noise, color, drawing primitives |
 | `threejs-3d.md` | Three.js Scene | Scene graph, geometry, materials, lighting, instanced meshes, particles, post-processing |
-| `shaders-glsl.md` | Three.js Shader | GLSL, SDFs, raymarching, 3D fractals, noise in GLSL, volumetric rendering, CSG operations |
+| `shaders-glsl.md` | Three.js Shader | GLSL, SDFs, raymarching, 3D fractals, noise in GLSL, volumetric rendering, CSG operations, easing, lighting models, fog, blending |
 | `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
 
 All algorithm families above apply to all output modes — the family reference files describe
@@ -387,6 +395,8 @@ Design them thoughtfully:
   palettes (e.g., "Sunset", "Ocean", "Neon", "Monochrome") so users can dramatically change the
   feel without understanding color theory. Include at least 3-4 palette options. If the user
   requests a specific palette (like "warm"), still provide multiple variations within that theme.
+  See `references/color-science.md` for cosine gradient presets, perceptual color spaces,
+  and LCH theme generation techniques.
 
 **Organize parameters into folders** using the `folder` field. The sidebar groups controls
 into sections by folder name. Use folders like "Structure", "Appearance", "Behavior", "Color"

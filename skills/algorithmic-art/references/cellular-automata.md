@@ -92,3 +92,41 @@ draw.polygon()
 Hex grid layout: offset every other row by `1.5 * cell_width`. Row spacing is
 `sin(60°) * cell_width`. This produces visually richer CA than square grids — six
 neighbors instead of four (or eight with diagonals) creates different emergent dynamics.
+
+## Functional Composition Pattern
+
+The thi.ng ecosystem demonstrates cellular automata implemented as composable transducers —
+pure functions that transform state without mutation:
+
+```javascript
+// CA as a functional pipeline:
+// 1. Define rule as pure function: (neighborhood) → next_state
+// 2. Apply rule across grid via map/transducer
+// 3. Produce new grid (immutable — old grid preserved)
+
+function stepCA(grid, width, rule) {
+  return grid.map((cell, i) => {
+    const neighbors = getNeighbors(grid, i, width);
+    return rule(cell, neighbors);
+  });
+}
+```
+
+This functional approach:
+- Makes it trivial to **rewind** (keep history as array of grids)
+- Enables **rule hot-swapping** (change rule function mid-simulation)
+- Supports **parallel computation** (no mutation, each cell independent)
+
+## Color Mapping for Multi-State CA
+
+For continuous automata or multi-state systems (Brian's Brain, Wireworld), use perceptual
+color mapping:
+
+- **Two-state** (Life): use high-contrast complementary pairs chosen in LCH with matched
+  lightness contrast (see `references/color-science.md`)
+- **Three-state** (Brian's Brain): triadic color scheme in LCH — alive, dying, dead as
+  three perceptually-spaced hues
+- **Continuous state** (smooth Life variants): map state value through a cosine gradient
+  or Oklab multi-stop gradient for smooth, vivid visualization
+- **History coloring**: track how many frames a cell has been alive; map age to palette
+  position for temporal depth visualization

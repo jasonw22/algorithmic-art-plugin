@@ -94,3 +94,43 @@ growth pattern useful for generative trees, corals, roots, and neural networks:
 
 This produces organic, asymmetric branching structures — far more natural-looking than
 pure recursive L-systems. Combine with per-generation color mapping for depth visualization.
+
+## SDF-Based Fractals (2D)
+
+Signed distance fields offer an alternative approach to 2D fractal construction. Instead of
+iterating complex numbers or rewriting strings, build fractal-like forms by composing SDF
+primitives with domain operations:
+
+- **Domain fold + SDF primitive**: Apply `abs()` (mirror) and rotation before evaluating
+  an SDF primitive. Repeated folding creates Sierpinski-like fractal structures.
+- **Iterated SDF**: Apply a sequence of domain transforms (fold, scale, translate) in a loop,
+  then evaluate a simple SDF (sphere, box). The iteration count controls fractal detail.
+
+```glsl
+// Sierpinski-like 2D fractal via domain folding
+float fractalSDF(vec2 p, int iterations) {
+  float scale = 1.0;
+  for (int i = 0; i < iterations; i++) {
+    p = abs(p) - 0.5;           // fold (mirror at ±0.5)
+    p *= mat2(0.866, -0.5, 0.5, 0.866); // rotate 30°
+    scale *= 2.0;
+  }
+  return sdBox(p, vec2(0.5)) / scale;
+}
+```
+
+See `references/sdf-2d.md` for 2D SDF primitives and boolean operators, and
+`references/shaders-glsl.md` for 3D SDF fractals (Mandelbulb, Menger sponge).
+
+## Perceptual Coloring for Fractals
+
+Classic Mandelbrot/Julia coloring maps iteration count to a palette. Using perceptual color
+spaces dramatically improves the result:
+
+- **Oklab interpolation** between palette stops prevents the banding and muddy transitions
+  common with sRGB gradients in fractal zoom animations.
+- **Cosine gradients** (see `references/color-science.md`) are particularly well-suited —
+  the smooth periodic nature of cosine palettes matches the cyclic structure of escape-time
+  coloring. Four coefficient vectors produce infinite smooth variation.
+- **Orbit trap coloring** benefits from mapping trap distance through an Oklab gradient rather
+  than direct RGB mapping, producing more vivid and perceptually even results.
