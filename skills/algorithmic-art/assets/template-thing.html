@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="sketch-title">Algorithmic Art — thi.ng</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e0e0e0; }
+
+  /* ---- Canvas ---- */
+  #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+  #canvas-container canvas { display: block; }
+
+  /* ---- Sidebar toggle ---- */
+  #sidebar-toggle {
+    position: fixed; top: 12px; right: 12px; z-index: 30;
+    background: rgba(30,30,30,0.7); color: #ccc; border: 1px solid #555;
+    width: 36px; height: 36px; border-radius: 6px; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  #sidebar-toggle:hover { background: rgba(60,60,60,0.9); }
+
+  /* ---- Sidebar ---- */
+  #sidebar {
+    position: fixed; top: 0; right: 0; z-index: 20;
+    width: 320px; height: 100vh; overflow-y: auto; overflow-x: hidden;
+    background: rgba(22,22,22,0.92); backdrop-filter: blur(12px);
+    border-left: 1px solid #333; padding: 16px;
+    transform: translateX(100%); transition: transform 0.25s ease;
+  }
+  #sidebar.open { transform: translateX(0); }
+
+  #sidebar h1 { font-size: 1.2em; color: #fff; margin-bottom: 4px; }
+  #sidebar .concept { font-size: 0.8em; color: #999; font-style: italic; margin-bottom: 16px; line-height: 1.4; }
+
+  /* ---- Sections ---- */
+  .ctrl-section { margin-bottom: 20px; }
+  .ctrl-section h3 {
+    font-size: 0.85em; font-weight: 600; color: #aaa; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #333;
+  }
+
+  /* ---- Controls ---- */
+  .ctrl-group { margin-bottom: 14px; }
+  .ctrl-group label { display: block; font-size: 0.8em; color: #ccc; margin-bottom: 4px; }
+  .ctrl-row { display: flex; align-items: center; gap: 10px; }
+
+  .ctrl-row input[type="range"] {
+    flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+    background: #444; border-radius: 2px; outline: none;
+  }
+  .ctrl-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    background: #d97757; border-radius: 50%; cursor: pointer;
+  }
+  .ctrl-row input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; background: #d97757;
+    border-radius: 50%; border: none; cursor: pointer;
+  }
+  .ctrl-val {
+    font-family: 'Courier New', monospace; font-size: 0.75em; color: #888;
+    min-width: 50px; text-align: right;
+  }
+
+  select.ctrl-select {
+    width: 100%; padding: 6px 8px; background: #2a2a2a; color: #ddd;
+    border: 1px solid #444; border-radius: 4px; font-size: 0.8em; cursor: pointer;
+  }
+
+  input[type="color"].ctrl-color {
+    width: 32px; height: 28px; border: 1px solid #444; border-radius: 4px;
+    background: none; padding: 0; cursor: pointer;
+  }
+  .color-hex { font-family: 'Courier New', monospace; font-size: 0.75em; color: #888; }
+
+  input[type="checkbox"].ctrl-check {
+    width: 16px; height: 16px; accent-color: #d97757; cursor: pointer;
+  }
+
+  /* ---- Seed controls ---- */
+  .seed-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .seed-input {
+    flex: 1; padding: 6px 8px; background: #2a2a2a; color: #ddd;
+    border: 1px solid #444; border-radius: 4px; font-family: 'Courier New', monospace;
+    font-size: 0.85em; text-align: center;
+  }
+  .seed-input:focus { outline: none; border-color: #d97757; }
+
+  /* ---- Buttons ---- */
+  .btn {
+    padding: 6px 12px; border: 1px solid #555; border-radius: 4px;
+    background: #333; color: #ddd; font-size: 0.8em; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #4a4a4a; }
+  .btn-accent { background: #d97757; border-color: #d97757; color: #fff; }
+  .btn-accent:hover { background: #c4613f; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-row .btn { flex: 1; text-align: center; }
+
+  /* ---- Bottom bar ---- */
+  #bottom-bar {
+    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 10;
+    display: flex; justify-content: center; gap: 8px; padding: 10px;
+    background: rgba(0,0,0,0.5);
+  }
+  #bottom-bar .btn { min-width: 80px; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+<button id="sidebar-toggle" title="Toggle controls">&#9776;</button>
+
+<!-- ── SIDEBAR ── -->
+<div id="sidebar">
+  <h1 id="display-title"></h1>
+  <div class="concept" id="display-concept"></div>
+
+  <!-- Seed section — always present -->
+  <div class="ctrl-section" id="section-seed">
+    <h3>Seed</h3>
+    <div class="seed-row">
+      <input type="number" class="seed-input" id="seed-input" value="12345">
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btn-seed-prev">&larr; Prev</button>
+      <button class="btn" id="btn-seed-next">Next &rarr;</button>
+      <button class="btn btn-accent" id="btn-seed-random">Random</button>
+    </div>
+  </div>
+
+  <!-- Parameter sections are generated here by the template engine -->
+  <div id="param-sections"></div>
+</div>
+
+<!-- ── BOTTOM BAR ── -->
+<div id="bottom-bar">
+  <button class="btn" id="btn-png">Export PNG</button>
+  <button class="btn" id="btn-svg">Export SVG</button>
+  <button class="btn" id="btn-pause">Pause</button>
+  <button class="btn" id="btn-reset">Reset</button>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DO NOT MODIFY ABOVE THIS LINE — TEMPLATE INFRASTRUCTURE
+// ═══════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 1: METADATA — Fill in for each piece
+// ═══════════════════════════════════════════════════════════════
+const SKETCH_META = {
+  title: "Untitled",
+  concept: "",
+  technique: "",
+  renderMode: "thing"   // always "thing" for this template
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 2: PARAMETERS — Define interactive controls
+//
+// Same format as other templates:
+//   Slider:   { value: 0.5, min: 0, max: 1, step: 0.01, label: "Name", folder: "Section" }
+//   Dropdown: { value: "opt1", options: ["opt1", "opt2"], label: "Name", folder: "Section" }
+//   Color:    { value: "#ff0000", type: "color", label: "Name", folder: "Section" }
+//   Boolean:  { value: true, label: "Name", folder: "Section" }
+// ═══════════════════════════════════════════════════════════════
+const PARAMS = {
+  // example: { value: 5, min: 1, max: 20, step: 1, label: "Count", folder: "Structure" }
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 3: SKETCH LOGIC — Your algorithm goes here
+//
+// This template provides a `tng` utility object with:
+//
+//   tng.color     — Perceptual color (Oklab/Oklch), cosine gradients, LCH themes
+//   tng.sdf       — 2D signed distance field primitives and operators
+//   tng.random    — Seeded SFC32 PRNG (deterministic from seed)
+//   tng.vec       — 2D vector math utilities
+//   tng.math      — Smoothstep, lerp, map, clamp, etc.
+//
+// Implement these functions:
+//
+//   sketchSetup(ctx, w, h, tng)
+//     Called once per seed. ctx is a Canvas 2D context.
+//     Use tng.random for deterministic randomness.
+//     Return a state object (or undefined).
+//
+//   sketchDraw(ctx, w, h, params, tng, state, time, delta)
+//     Called every frame. time = seconds since start.
+//     Draw to ctx using Canvas 2D API + tng utilities.
+//
+//   sketchSVG(w, h, params, tng, state) [OPTIONAL]
+//     Return an SVG string for vector export.
+//     If not implemented, SVG export falls back to edge detection.
+//
+// The key difference from p5.js mode:
+//   - Use tng.color for perceptual color (Oklab interpolation, cosine gradients)
+//   - Use tng.sdf for 2D signed distance field composition
+//   - Use tng.random instead of Math.random() for deterministic output
+//   - Build geometry as data, render with ctx — enables clean SVG export
+// ═══════════════════════════════════════════════════════════════
+
+function sketchSetup(ctx, w, h, tng) {
+  // Your setup code — return state object or undefined
+}
+
+function sketchDraw(ctx, w, h, params, tng, state, time, delta) {
+  // Your per-frame drawing code
+}
+
+// Optional: implement for clean vector SVG export
+// function sketchSVG(w, h, params, tng, state) { return '<svg ...>...</svg>'; }
+
+// ═══════════════════════════════════════════════════════════════
+// DO NOT MODIFY BELOW THIS LINE — TEMPLATE ENGINE + UTILITIES
+// ═══════════════════════════════════════════════════════════════
+
+(function () {
+  "use strict";
+
+  // ════════════════════════════════════════════════════════════
+  // thi.ng-INSPIRED UTILITY LIBRARY
+  // ════════════════════════════════════════════════════════════
+
+  const tng = {};
+
+  // ── Math utilities ──────────────────────────────────────────
+  tng.math = {
+    clamp: (x, lo, hi) => Math.max(lo, Math.min(hi, x)),
+    lerp: (a, b, t) => a + (b - a) * t,
+    map: (x, a1, b1, a2, b2) => a2 + (b2 - a2) * ((x - a1) / (b1 - a1)),
+    smoothstep: (edge0, edge1, x) => {
+      const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+      return t * t * (3 - 2 * t);
+    },
+    fract: (x) => x - Math.floor(x),
+    mod: (x, y) => ((x % y) + y) % y,
+    TAU: Math.PI * 2,
+    PI: Math.PI,
+    HALF_PI: Math.PI / 2,
+  };
+
+  // ── 2D Vector math ─────────────────────────────────────────
+  tng.vec = {
+    add: (a, b) => [a[0] + b[0], a[1] + b[1]],
+    sub: (a, b) => [a[0] - b[0], a[1] - b[1]],
+    scale: (v, s) => [v[0] * s, v[1] * s],
+    len: (v) => Math.sqrt(v[0] * v[0] + v[1] * v[1]),
+    lenSq: (v) => v[0] * v[0] + v[1] * v[1],
+    normalize: (v) => { const l = Math.sqrt(v[0]*v[0]+v[1]*v[1]) || 1; return [v[0]/l, v[1]/l]; },
+    dot: (a, b) => a[0] * b[0] + a[1] * b[1],
+    cross: (a, b) => a[0] * b[1] - a[1] * b[0],
+    rotate: (v, angle) => {
+      const c = Math.cos(angle), s = Math.sin(angle);
+      return [v[0] * c - v[1] * s, v[0] * s + v[1] * c];
+    },
+    lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t],
+    dist: (a, b) => Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2),
+    angle: (v) => Math.atan2(v[1], v[0]),
+    fromAngle: (a, r) => [Math.cos(a) * (r || 1), Math.sin(a) * (r || 1)],
+  };
+
+  // ── Seeded PRNG (SFC32 — same as thi.ng/random) ───────────
+  function sfc32(a, b, c, d) {
+    return function () {
+      a |= 0; b |= 0; c |= 0; d |= 0;
+      const t = (a + b | 0) + d | 0;
+      d = d + 1 | 0;
+      a = b ^ (b >>> 9);
+      b = c + (c << 3) | 0;
+      c = (c << 21) | (c >>> 11);
+      c = c + t | 0;
+      return (t >>> 0) / 4294967296;
+    };
+  }
+
+  function createRNG(seed) {
+    // Initialize SFC32 from a single seed via splitmix32 warming
+    let s = seed | 0;
+    function splitmix32() {
+      s = s + 0x9e3779b9 | 0;
+      let t = s ^ (s >>> 16);
+      t = Math.imul(t, 0x21f0aaad);
+      t = t ^ (t >>> 15);
+      t = Math.imul(t, 0x735a2d97);
+      t = t ^ (t >>> 15);
+      return t >>> 0;
+    }
+    const rng = sfc32(splitmix32(), splitmix32(), splitmix32(), splitmix32());
+    // Warm up
+    for (let i = 0; i < 12; i++) rng();
+    return rng;
+  }
+
+  function makeRandomAPI(rng) {
+    const api = {
+      float: () => rng(),
+      range: (min, max) => min + rng() * (max - min),
+      int: (min, max) => Math.floor(min + rng() * (max - min)),
+      bool: (p) => rng() < (p === undefined ? 0.5 : p),
+      pick: (arr) => arr[Math.floor(rng() * arr.length)],
+      shuffle: (arr) => {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      },
+      gaussian: (mean, stddev) => {
+        mean = mean || 0; stddev = stddev || 1;
+        let u, v, s;
+        do { u = rng() * 2 - 1; v = rng() * 2 - 1; s = u*u + v*v; } while (s >= 1 || s === 0);
+        return mean + stddev * u * Math.sqrt(-2 * Math.log(s) / s);
+      },
+      weightedPick: (items, weights) => {
+        const total = weights.reduce((a, b) => a + b, 0);
+        let r = rng() * total;
+        for (let i = 0; i < items.length; i++) {
+          r -= weights[i];
+          if (r <= 0) return items[i];
+        }
+        return items[items.length - 1];
+      },
+    };
+    return api;
+  }
+
+  // ── Color: Oklab / Oklch / Cosine Gradients ────────────────
+  tng.color = {
+    // sRGB ↔ linear
+    srgbToLinear: (x) => x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4),
+    linearToSrgb: (x) => x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1/2.4) - 0.055,
+
+    // sRGB [0-1] → Oklab [L, a, b]
+    rgbToOklab: function (rgb) {
+      const rl = this.srgbToLinear(rgb[0]);
+      const gl = this.srgbToLinear(rgb[1]);
+      const bl = this.srgbToLinear(rgb[2]);
+      let l = 0.4122214708 * rl + 0.5363325363 * gl + 0.0514459929 * bl;
+      let m = 0.2119034982 * rl + 0.6806995451 * gl + 0.1073969566 * bl;
+      let s = 0.0883024619 * rl + 0.2817188376 * gl + 0.6299787005 * bl;
+      l = Math.cbrt(l); m = Math.cbrt(m); s = Math.cbrt(s);
+      return [
+        0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+        1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+        0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+      ];
+    },
+
+    // Oklab [L, a, b] → sRGB [0-1]
+    oklabToRgb: function (lab) {
+      let l = lab[0] + 0.3963377774 * lab[1] + 0.2158037573 * lab[2];
+      let m = lab[0] - 0.1055613458 * lab[1] - 0.0638541728 * lab[2];
+      let s = lab[0] - 0.0894841775 * lab[1] - 1.2914855480 * lab[2];
+      l = l*l*l; m = m*m*m; s = s*s*s;
+      return [
+        tng.math.clamp(this.linearToSrgb(+4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s), 0, 1),
+        tng.math.clamp(this.linearToSrgb(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s), 0, 1),
+        tng.math.clamp(this.linearToSrgb(-0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s), 0, 1),
+      ];
+    },
+
+    // Oklch [L, C, H°] → sRGB [0-1]
+    oklch: function (L, C, H) {
+      const hRad = H * Math.PI / 180;
+      return this.oklabToRgb([L, C * Math.cos(hRad), C * Math.sin(hRad)]);
+    },
+
+    // Interpolate two sRGB colors in Oklab space
+    lerpOklab: function (c1, c2, t) {
+      const lab1 = this.rgbToOklab(c1);
+      const lab2 = this.rgbToOklab(c2);
+      return this.oklabToRgb([
+        lab1[0] + (lab2[0] - lab1[0]) * t,
+        lab1[1] + (lab2[1] - lab1[1]) * t,
+        lab1[2] + (lab2[2] - lab1[2]) * t,
+      ]);
+    },
+
+    // Cosine gradient palette: color(t) = a + b * cos(2π(c*t + d))
+    cosine: function (t, a, b, c, d) {
+      return [
+        tng.math.clamp(a[0] + b[0] * Math.cos(tng.math.TAU * (c[0] * t + d[0])), 0, 1),
+        tng.math.clamp(a[1] + b[1] * Math.cos(tng.math.TAU * (c[1] * t + d[1])), 0, 1),
+        tng.math.clamp(a[2] + b[2] * Math.cos(tng.math.TAU * (c[2] * t + d[2])), 0, 1),
+      ];
+    },
+
+    // Named cosine palette presets
+    palettes: {
+      rainbow:   { a: [0.5,0.5,0.5], b: [0.5,0.5,0.5], c: [1.0,1.0,1.0], d: [0.00,0.33,0.67] },
+      sunset:    { a: [0.5,0.5,0.5], b: [0.5,0.5,0.5], c: [1.0,1.0,1.0], d: [0.00,0.10,0.20] },
+      ocean:     { a: [0.5,0.5,0.5], b: [0.5,0.5,0.5], c: [1.0,1.0,0.5], d: [0.80,0.90,0.30] },
+      fire:      { a: [0.5,0.5,0.5], b: [0.5,0.5,0.5], c: [2.0,1.0,0.0], d: [0.50,0.20,0.25] },
+      electric:  { a: [0.5,0.5,0.5], b: [0.5,0.5,0.5], c: [1.0,1.0,1.0], d: [0.30,0.20,0.20] },
+      pastel:    { a: [0.8,0.5,0.4], b: [0.2,0.4,0.2], c: [2.0,1.0,1.0], d: [0.00,0.25,0.25] },
+      neon:      { a: [0.5,0.5,0.5], b: [0.5,0.5,0.5], c: [1.0,0.7,0.4], d: [0.00,0.15,0.20] },
+    },
+
+    // Shortcut: cosine palette by name
+    palette: function (t, name) {
+      const p = this.palettes[name] || this.palettes.rainbow;
+      return this.cosine(t, p.a, p.b, p.c, p.d);
+    },
+
+    // Multi-stop gradient in Oklab (colors as sRGB [0-1] arrays)
+    gradient: function (colors, t) {
+      const n = colors.length - 1;
+      const seg = Math.min(Math.floor(t * n), n - 1);
+      const lt = t * n - seg;
+      return this.lerpOklab(colors[seg], colors[Math.min(seg + 1, n)], lt);
+    },
+
+    // Convert [r,g,b] (0-1) to CSS string
+    toCSS: function (rgb) {
+      return `rgb(${Math.round(rgb[0]*255)},${Math.round(rgb[1]*255)},${Math.round(rgb[2]*255)})`;
+    },
+    toCSSA: function (rgb, a) {
+      return `rgba(${Math.round(rgb[0]*255)},${Math.round(rgb[1]*255)},${Math.round(rgb[2]*255)},${a})`;
+    },
+
+    // Parse hex "#rrggbb" to [r,g,b] (0-1)
+    fromHex: function (hex) {
+      hex = hex.replace("#", "");
+      return [
+        parseInt(hex.substring(0, 2), 16) / 255,
+        parseInt(hex.substring(2, 4), 16) / 255,
+        parseInt(hex.substring(4, 6), 16) / 255,
+      ];
+    },
+  };
+
+  // ── 2D Signed Distance Fields ──────────────────────────────
+  tng.sdf = {
+    // Primitives (centered at origin — translate point before calling)
+    circle: (px, py, r) => Math.sqrt(px*px + py*py) - r,
+
+    box: (px, py, bx, by) => {
+      const dx = Math.abs(px) - bx, dy = Math.abs(py) - by;
+      return Math.sqrt(Math.max(dx,0)**2 + Math.max(dy,0)**2)
+           + Math.min(Math.max(dx, dy), 0);
+    },
+
+    roundedBox: (px, py, bx, by, r) => {
+      const dx = Math.abs(px) - bx + r, dy = Math.abs(py) - by + r;
+      return Math.sqrt(Math.max(dx,0)**2 + Math.max(dy,0)**2)
+           + Math.min(Math.max(dx, dy), 0) - r;
+    },
+
+    segment: (px, py, ax, ay, bx, by) => {
+      const pax = px-ax, pay = py-ay, bax = bx-ax, bay = by-ay;
+      const h = Math.max(0, Math.min(1, (pax*bax + pay*bay) / (bax*bax + bay*bay)));
+      return Math.sqrt((pax - bax*h)**2 + (pay - bay*h)**2);
+    },
+
+    hexagon: (px, py, r) => {
+      const k = Math.sqrt(3) / 2;
+      let x = Math.abs(px), y = Math.abs(py);
+      const dot = Math.min(0, -2 * k * (k*x + 0.5*y));
+      x -= dot * k; y -= dot * 0.5;
+      x -= Math.max(0, Math.min(r, x));
+      return Math.sqrt(x*x + (y - r)**2) * Math.sign(y - r);
+    },
+
+    ring: (px, py, r, thickness) =>
+      Math.abs(Math.sqrt(px*px + py*py) - r) - thickness,
+
+    // Boolean operations
+    union: (d1, d2) => Math.min(d1, d2),
+    subtract: (d1, d2) => Math.max(-d1, d2),
+    intersect: (d1, d2) => Math.max(d1, d2),
+
+    smoothUnion: (d1, d2, k) => {
+      const h = Math.max(0, Math.min(1, 0.5 + 0.5 * (d2 - d1) / k));
+      return d2 * (1-h) + d1 * h - k * h * (1 - h);
+    },
+    smoothSubtract: (d1, d2, k) => {
+      const h = Math.max(0, Math.min(1, 0.5 - 0.5 * (d2 + d1) / k));
+      return d2 * (1-h) + (-d1) * h + k * h * (1 - h);
+    },
+    smoothIntersect: (d1, d2, k) => {
+      const h = Math.max(0, Math.min(1, 0.5 - 0.5 * (d2 - d1) / k));
+      return d2 * (1-h) + d1 * h + k * h * (1 - h);
+    },
+
+    // Shape modifiers
+    round: (d, r) => d - r,
+    onion: (d, thickness) => Math.abs(d) - thickness,
+
+    // Domain operations — transform point before evaluating SDF
+    opRepeat: (px, py, sx, sy) => [
+      tng.math.mod(px + sx * 0.5, sx) - sx * 0.5,
+      tng.math.mod(py + sy * 0.5, sy) - sy * 0.5,
+    ],
+    opPolar: (px, py, n) => {
+      const angle = Math.atan2(py, px);
+      const sector = tng.math.TAU / n;
+      const a = tng.math.mod(angle + sector * 0.5, sector) - sector * 0.5;
+      const r = Math.sqrt(px*px + py*py);
+      return [r * Math.cos(a), r * Math.sin(a)];
+    },
+    opMirror: (px, py) => [Math.abs(px), Math.abs(py)],
+    opRotate: (px, py, angle) => {
+      const c = Math.cos(angle), s = Math.sin(angle);
+      return [px * c - py * s, px * s + py * c];
+    },
+
+    // Render an SDF to a canvas context (fill pixels)
+    render: function (ctx, w, h, sdfFunc, colorFunc) {
+      const imgData = ctx.createImageData(w, h);
+      const data = imgData.data;
+      const invW = 2 / Math.min(w, h);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const px = (x - w * 0.5) * invW;
+          const py = (h * 0.5 - y) * invW;
+          const d = sdfFunc(px, py);
+          const [r, g, b, a] = colorFunc(d, px, py);
+          const i = (y * w + x) * 4;
+          data[i] = r * 255;
+          data[i+1] = g * 255;
+          data[i+2] = b * 255;
+          data[i+3] = (a !== undefined ? a : 1) * 255;
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    },
+  };
+
+  // ── Noise (2D Perlin-like via hash) ────────────────────────
+  tng.noise = {
+    _perm: null,
+    _init: function (seed) {
+      const rng = createRNG(seed);
+      this._perm = new Uint8Array(512);
+      const p = new Uint8Array(256);
+      for (let i = 0; i < 256; i++) p[i] = i;
+      for (let i = 255; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [p[i], p[j]] = [p[j], p[i]];
+      }
+      for (let i = 0; i < 512; i++) this._perm[i] = p[i & 255];
+    },
+    _grad: function (hash, x, y) {
+      const h = hash & 3;
+      const u = h < 2 ? x : y;
+      const v = h < 2 ? y : x;
+      return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+    },
+    _fade: (t) => t * t * t * (t * (t * 6 - 15) + 10),
+    // 2D noise, returns approximately -1 to 1
+    noise2d: function (x, y) {
+      if (!this._perm) this._init(12345);
+      const X = Math.floor(x) & 255, Y = Math.floor(y) & 255;
+      const xf = x - Math.floor(x), yf = y - Math.floor(y);
+      const u = this._fade(xf), v = this._fade(yf);
+      const p = this._perm;
+      const aa = p[p[X] + Y], ab = p[p[X] + Y + 1];
+      const ba = p[p[X + 1] + Y], bb = p[p[X + 1] + Y + 1];
+      return tng.math.lerp(
+        tng.math.lerp(this._grad(aa, xf, yf), this._grad(ba, xf - 1, yf), u),
+        tng.math.lerp(this._grad(ab, xf, yf - 1), this._grad(bb, xf - 1, yf - 1), u),
+        v
+      );
+    },
+    // Fractal Brownian Motion
+    fbm: function (x, y, octaves, lacunarity, persistence) {
+      octaves = octaves || 4;
+      lacunarity = lacunarity || 2.0;
+      persistence = persistence || 0.5;
+      let value = 0, amp = 1, freq = 1, maxAmp = 0;
+      for (let i = 0; i < octaves; i++) {
+        value += amp * this.noise2d(x * freq, y * freq);
+        maxAmp += amp;
+        amp *= persistence;
+        freq *= lacunarity;
+      }
+      return value / maxAmp;
+    },
+  };
+
+  // ════════════════════════════════════════════════════════════
+  // TEMPLATE ENGINE
+  // ════════════════════════════════════════════════════════════
+
+  let canvas, ctx;
+  let isPaused = false;
+  let sketchState = undefined;
+  let startTime = 0;
+  let lastFrameTime = 0;
+  let animationId = null;
+
+  if (!window.paramValues) window.paramValues = {};
+  const paramValues = window.paramValues;
+  let currentSeed = 12345;
+
+  // ── Build sidebar controls from PARAMS ──
+  function buildControls() {
+    for (const key in PARAMS) paramValues[key] = PARAMS[key].value;
+
+    const container = document.getElementById("param-sections");
+    container.innerHTML = "";
+
+    const folders = {};
+    for (const key in PARAMS) {
+      const folder = PARAMS[key].folder || "General";
+      if (!folders[folder]) folders[folder] = [];
+      folders[folder].push(key);
+    }
+
+    for (const folderName in folders) {
+      const section = document.createElement("div");
+      section.className = "ctrl-section";
+      section.innerHTML = `<h3>${folderName}</h3>`;
+
+      for (const key of folders[folderName]) {
+        const p = PARAMS[key];
+        const group = document.createElement("div");
+        group.className = "ctrl-group";
+        const label = p.label || key;
+
+        if (p.options) {
+          const opts = p.options.map(o =>
+            `<option value="${o}"${o === p.value ? " selected" : ""}>${o}</option>`
+          ).join("");
+          group.innerHTML = `<label>${label}</label>
+            <select class="ctrl-select" data-key="${key}">${opts}</select>`;
+          group.querySelector("select").addEventListener("change", function () {
+            paramValues[key] = this.value;
+          });
+        } else if (p.type === "color") {
+          group.innerHTML = `<label>${label}</label>
+            <div class="ctrl-row">
+              <input type="color" class="ctrl-color" data-key="${key}" value="${p.value}">
+              <span class="color-hex" id="hex-${key}">${p.value}</span>
+            </div>`;
+          group.querySelector("input").addEventListener("input", function () {
+            paramValues[key] = this.value;
+            document.getElementById("hex-" + key).textContent = this.value;
+          });
+        } else if (typeof p.value === "boolean") {
+          group.innerHTML = `<label>
+            <input type="checkbox" class="ctrl-check" data-key="${key}"${p.value ? " checked" : ""}> ${label}
+          </label>`;
+          group.querySelector("input").addEventListener("change", function () {
+            paramValues[key] = this.checked;
+          });
+        } else {
+          group.innerHTML = `<label>${label}</label>
+            <div class="ctrl-row">
+              <input type="range" data-key="${key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">
+              <span class="ctrl-val" id="val-${key}">${p.value}</span>
+            </div>`;
+          group.querySelector("input").addEventListener("input", function () {
+            paramValues[key] = parseFloat(this.value);
+            document.getElementById("val-" + key).textContent = this.value;
+          });
+        }
+
+        section.appendChild(group);
+      }
+      container.appendChild(section);
+    }
+  }
+
+  // ── Canvas setup ──
+  function createCanvas() {
+    const container = document.getElementById("canvas-container");
+    container.innerHTML = "";
+    canvas = document.createElement("canvas");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    container.appendChild(canvas);
+    ctx = canvas.getContext("2d");
+    return { w: canvas.width, h: canvas.height };
+  }
+
+  // ── Scene lifecycle ──
+  function createScene() {
+    const { w, h } = createCanvas();
+    isPaused = false;
+    document.getElementById("btn-pause").textContent = "Pause";
+
+    // Initialize seeded PRNG
+    const rng = createRNG(currentSeed);
+    tng.random = makeRandomAPI(rng);
+
+    // Initialize noise with seed
+    tng.noise._init(currentSeed);
+
+    // Call sketch setup
+    sketchState = sketchSetup(ctx, w, h, tng) || {};
+
+    // Start animation
+    startTime = performance.now();
+    lastFrameTime = startTime;
+    if (animationId) cancelAnimationFrame(animationId);
+    animate();
+  }
+
+  function animate() {
+    animationId = requestAnimationFrame(animate);
+    if (isPaused) return;
+
+    const now = performance.now();
+    const time = (now - startTime) / 1000;
+    const delta = (now - lastFrameTime) / 1000;
+    lastFrameTime = now;
+
+    sketchDraw(ctx, canvas.width, canvas.height, paramValues, tng, sketchState, time, delta);
+  }
+
+  // ── Seed system ──
+  function applySeed(seed) {
+    currentSeed = seed;
+    document.getElementById("seed-input").value = seed;
+    createScene();
+  }
+
+  // ── Edge detection fallback for SVG export ──
+  function sobelEdgeDetect(imageData, width, height, threshold) {
+    const src = imageData.data;
+    const edges = new Uint8ClampedArray(width * height);
+    const gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+    const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        let sumX = 0, sumY = 0;
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const idx = ((y + ky) * width + (x + kx)) * 4;
+            const lum = 0.299 * src[idx] + 0.587 * src[idx + 1] + 0.114 * src[idx + 2];
+            const ki = (ky + 1) * 3 + (kx + 1);
+            sumX += lum * gx[ki];
+            sumY += lum * gy[ki];
+          }
+        }
+        edges[y * width + x] = Math.sqrt(sumX * sumX + sumY * sumY) > threshold ? 255 : 0;
+      }
+    }
+    return edges;
+  }
+
+  function edgesToSVGPaths(edges, width, height) {
+    const visited = new Uint8Array(width * height);
+    const paths = [];
+    const dirs = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = y * width + x;
+        if (edges[idx] === 255 && !visited[idx]) {
+          const path = [];
+          let cx = x, cy = y, dir = 0, steps = 0;
+          do {
+            path.push([cx, cy]);
+            visited[cy * width + cx] = 1;
+            let found = false;
+            for (let i = 0; i < 8; i++) {
+              const nd = (dir + 5 + i) % 8;
+              const nx = cx + dirs[nd][0], ny = cy + dirs[nd][1];
+              if (nx >= 0 && nx < width && ny >= 0 && ny < height && edges[ny * width + nx] === 255 && !visited[ny * width + nx]) {
+                cx = nx; cy = ny; dir = nd; found = true; break;
+              }
+            }
+            if (!found) break;
+            steps++;
+          } while ((cx !== x || cy !== y) && steps < width * height);
+          if (path.length > 2) paths.push(path);
+        }
+      }
+    }
+    return paths;
+  }
+
+  // ── Export ──
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function exportPNG() {
+    if (!canvas) return;
+    canvas.toBlob(function (blob) {
+      if (blob) downloadBlob(blob, (SKETCH_META.title || "sketch") + "_seed" + currentSeed + ".png");
+    }, "image/png");
+  }
+
+  function exportSVG() {
+    // Try sketch-provided SVG export first
+    if (typeof sketchSVG === "function") {
+      try {
+        const svg = sketchSVG(canvas.width, canvas.height, paramValues, tng, sketchState);
+        if (svg) {
+          const blob = new Blob([svg], { type: "image/svg+xml" });
+          downloadBlob(blob, (SKETCH_META.title || "sketch") + "_seed" + currentSeed + ".svg");
+          return;
+        }
+      } catch (e) { console.warn("sketchSVG() failed, falling back to edge detection:", e); }
+    }
+    // Fallback: edge detection
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const edges = sobelEdgeDetect(imgData, canvas.width, canvas.height, 60);
+    const paths = edgesToSVGPaths(edges, canvas.width, canvas.height);
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}">`;
+    svg += `<rect width="${canvas.width}" height="${canvas.height}" fill="#1a1a1a"/>`;
+    for (const path of paths) {
+      if (path.length < 2) continue;
+      let d = "M" + path[0][0] + "," + path[0][1];
+      for (let i = 1; i < path.length; i++) d += "L" + path[i][0] + "," + path[i][1];
+      d += "Z";
+      svg += `<path d="${d}" fill="none" stroke="#ffffff" stroke-width="1"/>`;
+    }
+    svg += "</svg>";
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    downloadBlob(blob, (SKETCH_META.title || "sketch") + "_seed" + currentSeed + ".svg");
+  }
+
+  // ── Init ──
+  function init() {
+    document.getElementById("display-title").textContent = SKETCH_META.title;
+    document.getElementById("display-concept").textContent = SKETCH_META.concept;
+    document.getElementById("sketch-title").textContent = SKETCH_META.title + " — Algorithmic Art";
+
+    buildControls();
+    createScene();
+
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    document.getElementById("sidebar-toggle").addEventListener("click", function () {
+      sidebar.classList.toggle("open");
+    });
+
+    // Seed controls
+    document.getElementById("seed-input").addEventListener("change", function () {
+      const v = parseInt(this.value);
+      if (v && v > 0) applySeed(v);
+    });
+    document.getElementById("btn-seed-prev").addEventListener("click", function () {
+      applySeed(Math.max(1, currentSeed - 1));
+    });
+    document.getElementById("btn-seed-next").addEventListener("click", function () {
+      applySeed(currentSeed + 1);
+    });
+    document.getElementById("btn-seed-random").addEventListener("click", function () {
+      applySeed(Math.floor(Math.random() * 999999) + 1);
+    });
+
+    // Export & control buttons
+    document.getElementById("btn-png").addEventListener("click", exportPNG);
+    document.getElementById("btn-svg").addEventListener("click", exportSVG);
+    document.getElementById("btn-pause").addEventListener("click", function () {
+      isPaused = !isPaused;
+      this.textContent = isPaused ? "Play" : "Pause";
+      if (!isPaused) lastFrameTime = performance.now();
+    });
+    document.getElementById("btn-reset").addEventListener("click", function () {
+      applySeed(currentSeed);
+    });
+
+    // Resize
+    window.addEventListener("resize", function () {
+      createScene();
+    });
+  }
+
+  // Expose tng globally so sketch code can reference it in sketchSVG if needed
+  window.tng = tng;
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

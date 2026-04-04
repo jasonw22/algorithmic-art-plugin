@@ -2,8 +2,9 @@
 name: algorithmic-art
 description: >
   Use this skill to produce algorithmic art whenever a user wants visual art, beauty,
-  or aesthetic exploration through code and math. Supports five output modes: p5.js 2D (HTML),
-  Three.js 3D scene (HTML), Three.js GLSL shader (HTML), nannou 2D (Rust), or nannou 3D (Rust).
+  or aesthetic exploration through code and math. Supports six output modes: p5.js 2D (HTML),
+  thi.ng functional Canvas 2D (HTML), Three.js 3D scene (HTML), Three.js GLSL shader (HTML),
+  nannou 2D (Rust), or nannou 3D (Rust).
   This is the default skill for ANY request where the primary goal is creating something visually
   compelling through computation. Trigger for: generative art, fractal explorers, beautiful
   cellular automata (Conway's Game of Life), procedural patterns, particle animations, Penrose
@@ -21,8 +22,9 @@ description: >
 
 # Algorithmic Art
 
-Create algorithmic art in one of five output modes:
+Create algorithmic art in one of six output modes:
 - **p5.js** — standalone 2D HTML files with interactive parameter controls and PNG/SVG export
+- **thi.ng** — standalone 2D HTML files with built-in perceptual color (Oklab), 2D SDFs, seeded PRNG, and clean SVG export
 - **Three.js Scene** — standalone 3D HTML files with scene graph, lighting, OrbitControls, and PNG export
 - **Three.js Shader** — standalone HTML files running a fullscreen GLSL fragment shader (raymarching, SDFs, fractals, volumetric)
 - **nannou 2D** — compiled Rust applications using [nannou](https://nannou.cc) for 2D creative coding
@@ -43,30 +45,36 @@ When a user requests algorithmic art:
 1. **p5.js** (HTML, 2D) — Opens instantly in a browser. Best for interactive 2D parameter
    exploration, quick iteration, and sharing via a single file. Includes a sidebar with live
    controls, seed system, and PNG/SVG export.
-2. **Three.js Scene** (HTML, 3D) — Opens instantly in a browser. Best for 3D generative
+2. **thi.ng** (HTML, 2D) — Opens instantly in a browser. Best for perceptual color art
+   (Oklab/Oklch built-in), 2D SDF compositions (smooth booleans, domain repetition),
+   plotter-ready SVG export, and functional/data-driven workflows. Includes the same sidebar,
+   seed system, and PNG/SVG export. Uses Canvas 2D API directly (no p5.js dependency).
+3. **Three.js Scene** (HTML, 3D) — Opens instantly in a browser. Best for 3D generative
    sculptures, particle systems, instanced geometry, architectural forms, and any piece with
    distinct 3D objects. Includes OrbitControls (mouse orbit/pan/zoom), sidebar with live
    controls, seed system, and PNG export.
-3. **Three.js Shader** (HTML, 3D/GPU) — Opens instantly in a browser. Best for fullscreen GPU
+4. **Three.js Shader** (HTML, 3D/GPU) — Opens instantly in a browser. Best for fullscreen GPU
    effects: raymarched SDFs, 3D fractals (Mandelbulb, Menger sponge), volumetric rendering,
    GPU reaction-diffusion, domain warping, and Shadertoy-style pieces. Same sidebar and seed
    system. Requires GLSL knowledge.
-4. **nannou 2D** (Rust) — Compiled native app. Best for high-performance 2D rendering,
+5. **nannou 2D** (Rust) — Compiled native app. Best for high-performance 2D rendering,
    large-scale generative prints, and users who prefer Rust.
-5. **nannou 3D** (Rust) — Compiled native app. Best for high-performance 3D particle systems,
+6. **nannou 3D** (Rust) — Compiled native app. Best for high-performance 3D particle systems,
    3D attractors, custom wgpu shader pipelines, and Rust-based 3D generative work.
 
 If the user has already specified a preference (e.g., "make me a nannou app", "p5.js sketch",
 "3D fractal", "raymarched"), skip the question and proceed with that mode. If the context makes
 one choice obvious, infer without asking:
 - "open in browser" / "HTML" → p5.js (2D) or Three.js (3D)
+- "thi.ng" / "Oklab" / "perceptual color" / "SDF composition" / "plotter" / "functional" → thi.ng
 - "Rust project" / "compiled" → nannou
 - "3D sculpture" / "3D particles" / "orbit camera" → Three.js Scene or nannou 3D
 - "raymarching" / "SDF" / "Mandelbulb" / "shader" / "GLSL" → Three.js Shader
 - "fractal" without "3D" → p5.js (2D); "3D fractal" → Three.js Shader
+- "SVG export" / "vector output" / "plotter-ready" → thi.ng (best SVG support)
 
 The rest of this workflow applies to all modes. Sections specific to one mode are marked
-**[p5.js]**, **[Three.js Scene]**, **[Three.js Shader]**, **[nannou 2D]**, or **[nannou 3D]**.
+**[p5.js]**, **[thi.ng]**, **[Three.js Scene]**, **[Three.js Shader]**, **[nannou 2D]**, or **[nannou 3D]**.
 
 ### 1. Interpret the Request
 
@@ -97,6 +105,7 @@ Identify whether the request maps to a known algorithm family or requires someth
 | Reference | Modes | Key Concepts |
 |-----------|-------|--------------|
 | `nannou.md` | nannou 2D | Rust/nannou API, coordinate system, noise, color, drawing primitives |
+| `thing-2d.md` | thi.ng | Canvas 2D API + tng utilities (Oklab color, 2D SDFs, SFC32 PRNG, Perlin noise, vector math), sketchSVG() for clean vector export |
 | `threejs-3d.md` | Three.js Scene | Scene graph, geometry, materials, lighting, instanced meshes, particles, post-processing |
 | `shaders-glsl.md` | Three.js Shader | GLSL, SDFs, raymarching, 3D fractals, noise in GLSL, volumetric rendering, CSG operations, easing, lighting models, fog, blending |
 | `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
@@ -178,6 +187,60 @@ function sketchDraw(p, width, height, params) { /* per-frame drawing */ }
 
 The template reads these and handles everything else — sidebar generation, seed management,
 export, resize. Do not add dat.gui or build custom HTML controls.
+
+#### [thi.ng] Build as Functional Canvas 2D HTML
+
+Read the thi.ng template at `assets/template-thing.html`. This template must not be modified —
+it provides:
+- Full-viewport Canvas 2D context that fills the browser window
+- Same sidebar control panel, seed system, and PNG/SVG export as other templates
+- **Built-in `tng` utility library** with perceptual color (Oklab/Oklch), cosine gradients,
+  2D SDF primitives + smooth boolean operators + domain operations, seeded SFC32 PRNG,
+  2D Perlin noise with fBm, and vector math
+- Clean SVG export via optional `sketchSVG()` function (falls back to edge detection if not implemented)
+
+Set `renderMode: "thing"` in SKETCH_META. Copy the template and fill in three sections:
+
+```javascript
+const SKETCH_META = {
+  title: "Piece Title",
+  concept: "Brief philosophical description",
+  technique: "Algorithm family name",
+  renderMode: "thing"
+};
+
+const PARAMS = {
+  // Same format as all other templates
+};
+
+function sketchSetup(ctx, w, h, tng) {
+  // ctx = Canvas 2D context, tng = utility library
+  // tng.random is already seeded from the seed control
+  // Return a state object (or undefined)
+}
+
+function sketchDraw(ctx, w, h, params, tng, state, time, delta) {
+  // time = seconds since start, delta = seconds since last frame
+  // Draw to ctx using Canvas 2D API + tng utilities
+}
+
+// OPTIONAL: implement for clean vector SVG export
+function sketchSVG(w, h, params, tng, state) {
+  return '<svg xmlns="http://www.w3.org/2000/svg" ...>...</svg>';
+}
+```
+
+See `references/thing-2d.md` for the full `tng` API reference including color, SDF,
+random, noise, vector, and math utilities, plus common patterns for SDF composition,
+particle flow fields with SVG export, and tessellation with data geometry.
+
+**Key advantages over p5.js mode:**
+- Perceptual color (Oklab/Oklch) built into `tng.color` — no manual conversion needed
+- 2D SDF composition with smooth booleans via `tng.sdf` — ideal for shape-based art
+- First-class SVG export via `sketchSVG()` — plotter-ready vector output from geometry data
+- Seeded SFC32 PRNG via `tng.random` — deterministic, high-quality randomness
+- Seeded Perlin noise via `tng.noise` — deterministic noise fields
+- No external library dependency — everything is built into the template
 
 #### [Three.js Scene] Build as 3D HTML
 

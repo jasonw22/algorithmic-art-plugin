@@ -36,6 +36,24 @@
       "prompt": "Build a 3D Lorenz attractor visualization as a compiled Rust app with camera controls",
       "expected_output": "nannou 3D Cargo project with Lorenz attractor rendered as colored polyline or point cloud, manual perspective camera with keyboard orbit controls, seed system, PNG capture, key bindings printed at startup, concept explanation",
       "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Create an SDF mandala using the thi.ng mode — radial symmetry with smooth boolean shapes and a perceptual color palette",
+      "expected_output": "Standalone HTML file using thi.ng template (template-thing.html with renderMode 'thing'), tng.sdf for SDF primitives with smooth booleans, tng.sdf.opPolar for radial symmetry, tng.color.palette or tng.color.oklch for perceptual color, sidebar controls for symmetry/blend/palette, PNG/SVG export, concept explanation",
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Make a Truchet tiling with Oklab color gradients using the thi.ng functional canvas mode, with plotter-ready SVG export",
+      "expected_output": "Standalone HTML file using thi.ng template, Truchet tiles as data structures, tng.color.lerpOklab or tng.color.gradient for perceptual color, sketchSVG() function that produces clean vector SVG from tile data, sidebar controls for grid size/palette/style, concept explanation",
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "Create a flow field with perceptual color trails using the thi.ng mode",
+      "expected_output": "Standalone HTML file using thi.ng template, particle flow field using tng.noise.fbm for angles, tng.random for seeded particle initialization, tng.color.oklch or tng.color.palette for perceptual trail coloring, sidebar controls for noise scale/particle count/speed/palette, optional sketchSVG for vector export, concept explanation",
+      "files": []
     }
   ]
 }
