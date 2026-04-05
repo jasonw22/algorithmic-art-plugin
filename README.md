@@ -35,7 +35,7 @@ The skill automatically selects the best output mode based on your request, or y
 | **p5.js** | HTML (2D) | Interactive 2D sketches, quick iteration, particle systems, generative agents |
 | **thi.ng** | HTML (2D) | Perceptual color (Oklab/Oklch), 2D SDF composition, plotter-ready SVG, functional workflows |
 | **Three.js Scene** | HTML (3D) | 3D generative sculptures, procedural landscapes, particle systems with scene graph and OrbitControls |
-| **Three.js Shader** | HTML (GLSL) | Raymarching, volumetric rendering, 3D SDF fractals (Mandelbulb, Menger), fullscreen shader art |
+| **Three.js Shader** | HTML (GLSL) | Raymarching, PBR, volumetric rendering, 3D SDF fractals, ocean/terrain/atmosphere, GPU simulation, fullscreen shader art |
 | **nannou 2D** | Rust | High-performance 2D creative coding, compiled applications, high-res print output |
 | **nannou 3D** | Rust | 3D generative art with wgpu, perspective camera, compiled performance |
 
@@ -64,6 +64,13 @@ The thi.ng mode includes a built-in utility library (`tng`) with:
 | SDF composition | 2D/3D signed distance fields, smooth booleans, domain repetition |
 | Shader art | GLSL fragment shaders, raymarching, volumetric effects |
 | Perceptual color art | Oklab gradients, cosine palettes, LCH theme generation |
+| Voronoi / cellular noise | Worley noise, distance metrics, F1/F2 patterns, edge detection |
+| Procedural landscapes | Terrain raymarching, ridged noise, biome materials, atmospheric scattering |
+| Water & ocean | Gerstner waves, Fresnel reflection, subsurface scattering, caustics |
+| Path tracing / PBR | Cook-Torrance BRDF, global illumination, importance sampling |
+| GPU simulation | Multipass ping-pong buffers for reaction-diffusion, fluid, cellular automata on GPU |
+| Post-processing | Bloom, vignette, chromatic aberration, film grain, CRT, tone mapping |
+| Analytic ray tracing | Exact ray-primitive intersection, refraction, reflection |
 
 ## Features
 
@@ -74,19 +81,49 @@ The thi.ng mode includes a built-in utility library (`tng`) with:
 - Pause, reset, and seed navigation controls
 - Extensible reference library covering color science, SDFs, shaders, tiling, noise, and more
 
+## Shader Technique Routing
+
+For Three.js Shader mode, the skill includes an intent-based routing table that maps natural language requests to the right combination of reference files. For example:
+
+- "procedural landscape with sunset" routes to terrain-rendering + atmospheric-scattering + post-processing
+- "GPU reaction-diffusion" routes to multipass-buffers + shaders-glsl
+- "glass spheres with refraction" routes to analytic-raytracing + shaders-glsl + post-processing
+
+Quick recipes compose multiple techniques for common goals like photorealistic SDF scenes, procedural landscapes, GPU simulation art, organic forms, and abstract shader art.
+
 ## Reference Library
 
-The skill includes deep reference material on:
+The skill includes 29 deep reference files covering:
 
+**Algorithm families:**
 - **Color science** — Oklab/Oklch perceptual spaces, cosine gradient palettes, harmonic schemes
 - **2D SDFs** — Primitives, boolean operations, domain transforms, rendering techniques
-- **GLSL shaders** — Easing functions, lighting models, noise, blending, SDF operators
 - **Tiling & tessellation** — Composable tessellation algorithms, SDF-based tiling, data-driven geometry
 - **Flow fields & noise** — Curl noise, fbm, functional composition patterns
 - **Fractals & L-systems** — SDF-based fractals, domain folding, L-system grammars
 - **Cellular automata** — Functional CA patterns, multi-state coloring
 - **Strange attractors** — Functional iteration, perceptual color mapping
-- **thi.ng ecosystem** — Patterns from the thi.ng/umbrella monorepo and genart-api
+- **Generative agents** — Flocking, steering behaviors, autonomous agents
+
+**Shader techniques:**
+- **GLSL shaders** — SDFs, raymarching, PBR lighting, tone mapping, polar UV, noise, easing, fog, blending
+- **Multipass buffers** — Ping-pong framebuffers for GPU simulation (fluid, cellular automata, reaction-diffusion)
+- **Post-processing** — Bloom, vignette, chromatic aberration, film grain, CRT, color grading
+- **Voronoi noise** — Cellular noise, distance metrics, F1/F2 patterns, 3D Voronoi
+- **Path tracing** — Monte Carlo GI, Cook-Torrance PBR, importance sampling, progressive accumulation
+- **Atmospheric scattering** — Rayleigh/Mie physical sky, aerial perspective, god rays
+- **Water & ocean** — Gerstner waves, Fresnel, subsurface scattering, caustics, foam
+- **Terrain rendering** — Procedural heightfields, ridged noise, biome materials, terrain raymarching
+- **Anti-aliasing** — Supersampling (RGSS, stochastic), analytical AA with fwidth, temporal AA
+- **Procedural 2D patterns** — Checkerboard, brick, hex grid, Truchet, stripes in GLSL
+- **Analytic ray tracing** — Exact ray-primitive intersection, reflection, refraction
+- **Sound synthesis** — Shader audio, oscillators, envelopes, WebAudio integration
+- **WebGL pitfalls** — Precision issues, common bugs, visual debugging, mobile compatibility
+
+**Platform references:**
+- **thi.ng ecosystem** — Functional creative coding, composable tessellation, genart-api
+- **Three.js 3D** — Scene graph, geometry, materials, lighting, instanced meshes
+- **nannou 2D/3D** — Rust creative coding, wgpu pipelines, WGSL shaders
 
 ## License
 

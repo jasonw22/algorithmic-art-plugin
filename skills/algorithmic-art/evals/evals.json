@@ -54,6 +54,60 @@
       "prompt": "Create a flow field with perceptual color trails using the thi.ng mode",
       "expected_output": "Standalone HTML file using thi.ng template, particle flow field using tng.noise.fbm for angles, tng.random for seeded particle initialization, tng.color.oklch or tng.color.palette for perceptual trail coloring, sidebar controls for noise scale/particle count/speed/palette, optional sketchSVG for vector export, concept explanation",
       "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "Create a GPU reaction-diffusion simulation using multipass ping-pong buffers in shader mode",
+      "expected_output": "Standalone HTML file using Three.js Shader mode with renderMode 'shader', ping-pong WebGLRenderTargets for state storage, Gray-Scott reaction-diffusion in GLSL with Laplacian stencil, initial seed conditions, sidebar controls for feed rate/kill rate/diffusion/palette, concept explanation about Turing patterns and morphogenesis",
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "Make a procedural landscape with mountains, atmospheric fog, and a sunset sky",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, terrain raymarching with FBM or ridged noise height function, terrain normal calculation, biome-based material coloring (rock/grass/snow), atmospheric scattering or aerial perspective fog, sun near horizon for warm tones, ACES tone mapping, sidebar controls for terrain scale/sun angle/fog density, concept explanation",
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "Create a shader with an animated ocean surface with realistic wave physics and reflections",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, Gerstner wave displacement with multiple wave frequencies, ocean normal calculation, Fresnel-based reflection/refraction blending, specular highlights, sky reflection, optional foam at wave crests, tone mapping, sidebar controls for wave height/speed/sun direction, concept explanation",
+      "files": []
+    },
+    {
+      "id": 13,
+      "prompt": "Make a Voronoi stained glass window shader with colored cells and glowing edges",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, Voronoi F1/F2 distance calculation, cell ID for per-cell coloring via hash or palette, edge detection from F2-F1 difference, glow or bright edges via distance-based intensity, optional animation of seed points, vignette post-processing, sidebar controls for cell count/edge glow/palette, concept explanation",
+      "files": []
+    },
+    {
+      "id": 14,
+      "prompt": "Create a raymarched PBR scene with metallic and rough spheres on a reflective floor",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, raymarched SDF scene with sphere and plane primitives, Cook-Torrance PBR shading (GGX distribution, Smith geometry, Fresnel-Schlick), metallic and roughness material parameters, reflection rays for floor, soft shadows, ACES tone mapping, sidebar controls for roughness/metallic/light direction, concept explanation about physically-based rendering",
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "Make a shader kaleidoscope that transforms noise patterns into radial symmetry with chromatic aberration and bloom",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, polar UV transformation with kaleidoscope folding, FBM noise or domain warping as source pattern, chromatic aberration post-processing, bloom (bright threshold + glow), vignette, sidebar controls for symmetry segments/noise scale/aberration amount/bloom intensity, concept explanation",
+      "files": []
+    },
+    {
+      "id": 16,
+      "prompt": "Create a GPU cellular automata (Game of Life variant) with color trails using buffer ping-pong",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, ping-pong framebuffers for state, cellular automata rules applied per-pixel via neighbor sampling, color trails by storing previous generation in a separate channel (e.g. green channel fades), initial random state from hash, sidebar controls for rule variant/trail fade/palette/speed, concept explanation about emergence from simple rules",
+      "files": []
+    },
+    {
+      "id": 17,
+      "prompt": "Make a GLSL Truchet tile pattern with anti-aliased curves on a hexagonal grid",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, hexagonal grid tiling, Truchet-style arc pattern with per-cell random rotation from hash, anti-aliased curves using fwidth() or smoothstep with pixel-scale threshold, optional color variation per cell, sidebar controls for grid scale/line width/palette, concept explanation",
+      "files": []
+    },
+    {
+      "id": 18,
+      "prompt": "Create a shader that renders transparent glass spheres using analytic ray tracing with refraction",
+      "expected_output": "Standalone HTML file using Three.js Shader mode, analytic ray-sphere intersection (quadratic formula), Fresnel-Schlick for reflection/refraction blend, Snell's law refraction via GLSL refract() or manual implementation, multiple bounces (at least 2), ground plane with checkerboard, environment sky, sidebar controls for IOR/sphere count/background, concept explanation about light transport",
+      "files": []
     }
   ]
 }

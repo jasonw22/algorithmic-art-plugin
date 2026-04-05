@@ -612,6 +612,84 @@ vec3 hemisphereLight(vec3 n, vec3 skyColor, vec3 groundColor) {
 }
 ```
 
+### PBR / Cook-Torrance BRDF
+
+Physically-based rendering using the microfacet model. For full implementation with
+importance sampling, see `references/path-tracing.md`.
+
+```glsl
+// GGX/Trowbridge-Reitz normal distribution function
+float distributionGGX(vec3 N, vec3 H, float roughness) {
+  float a = roughness * roughness;
+  float a2 = a * a;
+  float NdotH = max(dot(N, H), 0.0);
+  float denom = NdotH * NdotH * (a2 - 1.0) + 1.0;
+  return a2 / (3.14159 * denom * denom);
+}
+
+// Smith's geometry function (self-shadowing of microfacets)
+float geometrySmith(float NdotV, float NdotL, float roughness) {
+  float r = roughness + 1.0;
+  float k = (r * r) / 8.0;
+  float ggx1 = NdotV / (NdotV * (1.0 - k) + k);
+  float ggx2 = NdotL / (NdotL * (1.0 - k) + k);
+  return ggx1 * ggx2;
+}
+
+// Fresnel-Schlick (vec3 for metallic colors)
+vec3 fresnelSchlickVec(float cosTheta, vec3 F0) {
+  return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+// Complete PBR shading
+vec3 pbrShade(vec3 N, vec3 V, vec3 L, vec3 albedo, float metallic, float roughness, vec3 lightColor) {
+  vec3 H = normalize(V + L);
+  float NdotV = max(dot(N, V), 0.001);
+  float NdotL = max(dot(N, L), 0.001);
+  float HdotV = max(dot(H, V), 0.0);
+
+  vec3 F0 = mix(vec3(0.04), albedo, metallic);
+
+  float D = distributionGGX(N, H, roughness);
+  float G = geometrySmith(NdotV, NdotL, roughness);
+  vec3 F = fresnelSchlickVec(HdotV, F0);
+
+  vec3 specular = (D * G * F) / (4.0 * NdotV * NdotL + 0.001);
+  vec3 kD = (1.0 - F) * (1.0 - metallic);
+  vec3 diffuse = kD * albedo / 3.14159;
+
+  return (diffuse + specular) * lightColor * NdotL;
+}
+```
+
+### Tone Mapping
+
+Convert HDR values to displayable LDR range. Essential for PBR and raymarched scenes.
+See `references/post-processing.md` for full post-processing pipeline.
+
+```glsl
+// ACES filmic (industry standard — good contrast, slight warmth)
+vec3 acesToneMap(vec3 x) {
+  float a = 2.51, b = 0.03, c = 2.43, d = 0.59, e = 0.14;
+  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+}
+
+// Reinhard (simple, soft)
+vec3 reinhardToneMap(vec3 color) {
+  return color / (1.0 + color);
+}
+
+// Uncharted 2 filmic (warm, cinematic)
+vec3 uncharted2Helper(vec3 x) {
+  float A=0.15, B=0.50, C=0.10, D=0.20, E=0.02, F=0.30;
+  return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+}
+vec3 uncharted2ToneMap(vec3 color, float exposure) {
+  vec3 curr = uncharted2Helper(color * exposure);
+  return curr / uncharted2Helper(vec3(11.2));
+}
+```
+
 ## Fog Functions
 
 ```glsl
@@ -708,11 +786,148 @@ float opRound(float d, float r) {
 }
 ```
 
+### Smooth Min/Max Variants
+
+Different smooth min functions produce different blending profiles. The polynomial
+version above (`opSmoothUnion`) is most common, but alternatives offer different aesthetics:
+
+```glsl
+// Cubic smooth min (slightly different curvature than polynomial)
+float sminCubic(float a, float b, float k) {
+  float h = max(k - abs(a - b), 0.0) / k;
+  return min(a, b) - h * h * h * k * (1.0 / 6.0);
+}
+
+// Exponential smooth min (very soft blend, no sharp boundary)
+float sminExp(float a, float b, float k) {
+  float res = exp2(-k * a) + exp2(-k * b);
+  return -log2(res) / k;
+}
+
+// Power smooth min (adjustable via exponent)
+float sminPow(float a, float b, float k) {
+  a = pow(a, k);
+  b = pow(b, k);
+  return pow((a * b) / (a + b), 1.0 / k);
+}
+
+// Circular smooth min (quarter-circle profile at junction)
+float sminCircular(float a, float b, float k) {
+  vec2 u = max(vec2(k - a, k - b), vec2(0.0));
+  return max(k, min(a, b)) - length(u);
+}
+```
+
+### Normal Estimation Methods
+
+Two main approaches for computing normals from SDFs:
+
+```glsl
+// Tetrahedral method (4 samples — faster, recommended)
+vec3 calcNormalTetra(vec3 p) {
+  const float h = 0.0001;
+  const vec2 k = vec2(1, -1);
+  return normalize(
+    k.xyy * sceneSDF(p + k.xyy * h) +
+    k.yyx * sceneSDF(p + k.yyx * h) +
+    k.yxy * sceneSDF(p + k.yxy * h) +
+    k.xxx * sceneSDF(p + k.xxx * h)
+  );
+}
+
+// Central differences (6 samples — more symmetric, slightly more accurate on steep gradients)
+vec3 calcNormalCentral(vec3 p) {
+  const float h = 0.0001;
+  return normalize(vec3(
+    sceneSDF(p + vec3(h, 0, 0)) - sceneSDF(p - vec3(h, 0, 0)),
+    sceneSDF(p + vec3(0, h, 0)) - sceneSDF(p - vec3(0, h, 0)),
+    sceneSDF(p + vec3(0, 0, h)) - sceneSDF(p - vec3(0, 0, h))
+  ));
+}
+
+// Tetrahedral is preferred for performance (4 vs 6 SDF evaluations).
+// Central differences may produce slightly better results for very thin features.
+// Both should use an epsilon proportional to the ray distance for distant objects:
+//   float h = 0.0001 * t;  // scale with distance
+```
+
+## Polar UV Manipulation
+
+Transform UV coordinates into polar space for radial effects, kaleidoscopes,
+and spiral patterns.
+
+```glsl
+// Basic polar conversion
+vec2 toPolar(vec2 p) {
+  return vec2(length(p), atan(p.y, p.x));
+}
+
+// Back to Cartesian
+vec2 toCartesian(float r, float theta) {
+  return r * vec2(cos(theta), sin(theta));
+}
+
+// Kaleidoscope: fold angle into N sectors
+vec2 kaleidoscope(vec2 p, float segments) {
+  float angle = atan(p.y, p.x);
+  float sector = 6.28318 / segments;
+  angle = mod(angle, sector);
+  // Mirror alternate sectors for seamless reflection
+  angle = min(angle, sector - angle);
+  float r = length(p);
+  return vec2(r * cos(angle), r * sin(angle));
+}
+
+// Radial repetition (place objects around a circle)
+vec2 polarRepeat(vec2 p, float n) {
+  float angle = atan(p.y, p.x);
+  float sector = 6.28318 / n;
+  angle = mod(angle + sector * 0.5, sector) - sector * 0.5;
+  return length(p) * vec2(cos(angle), sin(angle));
+}
+
+// Log-polar (maps radial distance to linear — infinite zoom effect)
+vec2 logPolar(vec2 p) {
+  return vec2(log(length(p)), atan(p.y, p.x));
+}
+
+// Spiral coordinates
+vec2 spiralUV(vec2 p, float twist) {
+  float r = length(p);
+  float theta = atan(p.y, p.x) + r * twist;
+  return vec2(r, theta);
+}
+
+// Angular distortion (for swirl/vortex effects)
+vec2 swirlDistort(vec2 p, float strength, float falloff) {
+  float r = length(p);
+  float angle = strength * exp(-r * falloff);
+  float c = cos(angle), s = sin(angle);
+  return mat2(c, -s, s, c) * p;
+}
+```
+
 ## 2D SDF Reference
 
 For 2D signed distance fields (used in both shader mode and CPU-based p5.js compositions),
 see `references/sdf-2d.md` which covers 2D primitives, boolean operators, domain operations
 (repetition, polar symmetry, mirroring), and rendering techniques.
+
+## Related References
+
+For advanced shader techniques, see these dedicated reference files:
+- `multipass-buffers.md` — Ping-pong framebuffers for GPU simulation (fluid, cellular automata, reaction-diffusion)
+- `post-processing.md` — Bloom, vignette, chromatic aberration, film grain, CRT effects, tone mapping, color grading
+- `voronoi-noise.md` — Voronoi/cellular noise with multiple distance metrics, F1/F2 patterns, edge detection
+- `path-tracing.md` — Monte Carlo path tracing, PBR materials, importance sampling, progressive accumulation
+- `atmospheric-scattering.md` — Rayleigh/Mie scattering, physical sky model, aerial perspective, god rays
+- `water-ocean.md` — Gerstner waves, Fresnel reflection, subsurface scattering, caustics, foam
+- `terrain-rendering.md` — Procedural heightfields, ridged noise, biome materials, terrain raymarching
+- `anti-aliasing.md` — Supersampling strategies, analytical AA with fwidth, temporal AA
+- `procedural-2d-patterns.md` — Checkerboard, brick, hex grid, Truchet, stripes, polka dots in GLSL
+- `analytic-raytracing.md` — Exact ray-primitive intersection (sphere, box, plane, cylinder)
+- `sound-synthesis.md` — Shader-based audio, oscillators, envelopes, drum synthesis, WebAudio integration
+- `webgl-pitfalls.md` — Precision issues, common bugs, visual debugging techniques
 
 ## Key References
 

@@ -107,7 +107,19 @@ Identify whether the request maps to a known algorithm family or requires someth
 | `nannou.md` | nannou 2D | Rust/nannou API, coordinate system, noise, color, drawing primitives |
 | `thing-2d.md` | thi.ng | Canvas 2D API + tng utilities (Oklab color, 2D SDFs, SFC32 PRNG, Perlin noise, vector math), sketchSVG() for clean vector export |
 | `threejs-3d.md` | Three.js Scene | Scene graph, geometry, materials, lighting, instanced meshes, particles, post-processing |
-| `shaders-glsl.md` | Three.js Shader | GLSL, SDFs, raymarching, 3D fractals, noise in GLSL, volumetric rendering, CSG operations, easing, lighting models, fog, blending |
+| `shaders-glsl.md` | Three.js Shader | GLSL, SDFs, raymarching, 3D fractals, noise in GLSL, volumetric rendering, CSG operations, PBR lighting, tone mapping, polar UV, easing, fog, blending |
+| `multipass-buffers.md` | Three.js Shader | Ping-pong framebuffers for GPU simulation (fluid, cellular automata, reaction-diffusion) |
+| `post-processing.md` | Three.js Shader, Three.js Scene | Bloom, vignette, chromatic aberration, film grain, CRT, tone mapping, color grading |
+| `voronoi-noise.md` | Three.js Shader, p5.js, thi.ng | Voronoi/cellular noise, distance metrics, F1/F2 patterns, edge detection, 3D Voronoi |
+| `path-tracing.md` | Three.js Shader | Monte Carlo path tracing, Cook-Torrance PBR, importance sampling, progressive accumulation |
+| `atmospheric-scattering.md` | Three.js Shader | Rayleigh/Mie scattering, physical sky, aerial perspective, god rays |
+| `water-ocean.md` | Three.js Shader | Gerstner waves, Fresnel, subsurface scattering, caustics, foam |
+| `terrain-rendering.md` | Three.js Shader | Procedural heightfields, ridged noise, biome materials, terrain raymarching |
+| `anti-aliasing.md` | Three.js Shader | Supersampling (RGSS, stochastic), analytical AA with fwidth, temporal AA |
+| `procedural-2d-patterns.md` | Three.js Shader | Checkerboard, brick, hex grid, Truchet, stripes, polka dots in GLSL |
+| `analytic-raytracing.md` | Three.js Shader | Exact ray-primitive intersection (sphere, box, plane, cylinder), reflection/refraction |
+| `sound-synthesis.md` | Three.js Shader | Shader audio, oscillators, envelopes, drums, WebAudio integration |
+| `webgl-pitfalls.md` | Three.js Shader | Precision issues, common bugs, visual debugging, mobile compatibility |
 | `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
 
 All algorithm families above apply to all output modes — the family reference files describe
@@ -327,6 +339,42 @@ function shaderAnimate(uniforms, params, time) {
 
 See `references/shaders-glsl.md` for SDF primitives, CSG operations, raymarching,
 3D fractals (Mandelbulb, Menger sponge), noise in GLSL, volumetric effects, and palettes.
+
+##### Shader Technique Routing Table
+
+When a shader mode request arrives, use this table to identify the **primary technique**
+and **combinable techniques** to read from `references/`. Read the primary reference first,
+then pull in combinable references as needed for the full implementation.
+
+| User Intent / Keywords | Primary Reference | Combinable References |
+|------------------------|-------------------|----------------------|
+| "raymarched scene", "SDF sculpture", "organic shapes" | `shaders-glsl.md` (SDFs + raymarching) | `post-processing.md`, `anti-aliasing.md` |
+| "Mandelbulb", "Menger sponge", "3D fractal" | `shaders-glsl.md` (3D Fractals) | `post-processing.md`, `anti-aliasing.md` |
+| "photorealistic", "PBR", "metallic/rough" | `path-tracing.md` | `shaders-glsl.md` (SDFs), `post-processing.md`, `anti-aliasing.md` |
+| "global illumination", "path trace", "bounced light" | `path-tracing.md` | `multipass-buffers.md`, `shaders-glsl.md` |
+| "sky", "sunset", "atmosphere", "god rays" | `atmospheric-scattering.md` | `terrain-rendering.md`, `post-processing.md` |
+| "ocean", "water", "waves", "sea" | `water-ocean.md` | `atmospheric-scattering.md`, `post-processing.md` |
+| "terrain", "landscape", "mountains", "procedural land" | `terrain-rendering.md` | `atmospheric-scattering.md`, `post-processing.md` |
+| "reaction-diffusion", "Turing pattern" (GPU) | `multipass-buffers.md` | `shaders-glsl.md` (noise), `post-processing.md` |
+| "fluid", "smoke", "ink in water" | `multipass-buffers.md` | `post-processing.md` |
+| "Game of Life", "cellular automata" (GPU) | `multipass-buffers.md` | `post-processing.md` |
+| "Voronoi", "cells", "cracked", "bubbles" | `voronoi-noise.md` | `shaders-glsl.md` (noise), `post-processing.md` |
+| "bloom", "glow", "film grain", "CRT", "retro" | `post-processing.md` | (any scene technique) |
+| "kaleidoscope", "mandala", "radial", "spiral" (shader) | `shaders-glsl.md` (Polar UV) | `voronoi-noise.md`, `post-processing.md` |
+| "checkerboard", "brick", "hex grid", "Truchet" (shader) | `procedural-2d-patterns.md` | `shaders-glsl.md`, `post-processing.md` |
+| "glass sphere", "mirror", "refraction" | `analytic-raytracing.md` | `shaders-glsl.md` (lighting), `post-processing.md` |
+| "anti-aliased", "smooth edges", "supersampled" | `anti-aliasing.md` | (any scene technique) |
+| "audio", "sound", "music", "audio-reactive" | `sound-synthesis.md` | (any visual technique) |
+| "WebGL bug", "black screen", "precision", "debug" | `webgl-pitfalls.md` | — |
+
+**Quick Recipes** — common multi-technique compositions:
+
+1. **Photorealistic SDF Scene**: `shaders-glsl.md` (SDFs + raymarching + lighting) → `path-tracing.md` (PBR) → `post-processing.md` (tone mapping + bloom + vignette) → `anti-aliasing.md` (RGSS)
+2. **Procedural Landscape**: `terrain-rendering.md` → `atmospheric-scattering.md` → `water-ocean.md` (if water present) → `post-processing.md` (tone mapping + fog)
+3. **GPU Simulation Art**: `multipass-buffers.md` (ping-pong setup) → technique-specific shader (RD from `reaction-diffusion.md`, fluid, or CA) → `post-processing.md` (color grading)
+4. **Organic Forms**: `shaders-glsl.md` (smooth SDF unions + domain warping) → `voronoi-noise.md` (surface texture) → `post-processing.md` (bloom + vignette)
+5. **Abstract Shader Art**: `shaders-glsl.md` (Polar UV + noise) → `procedural-2d-patterns.md` → `post-processing.md` (chromatic aberration + film grain)
+6. **Stylized 2D Pattern**: `procedural-2d-patterns.md` → `voronoi-noise.md` → `post-processing.md` (CRT or vignette)
 
 #### [nannou 2D] Build as Rust Project
 
