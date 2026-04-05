@@ -70,6 +70,7 @@ The thi.ng mode includes a built-in utility library (`tng`) with:
 | Path tracing / PBR | Cook-Torrance BRDF, global illumination, importance sampling |
 | GPU simulation | Multipass ping-pong buffers for reaction-diffusion, fluid, cellular automata on GPU |
 | Post-processing | Bloom, vignette, chromatic aberration, film grain, CRT, tone mapping |
+| Line art & contours | Silhouette/crease extraction, screen-space edge detection, toon shading, SVG export |
 | Analytic ray tracing | Exact ray-primitive intersection, refraction, reflection |
 
 ## Features
@@ -88,12 +89,14 @@ For Three.js Shader mode, the skill includes an intent-based routing table that 
 - "procedural landscape with sunset" routes to terrain-rendering + atmospheric-scattering + post-processing
 - "GPU reaction-diffusion" routes to multipass-buffers + shaders-glsl
 - "glass spheres with refraction" routes to analytic-raytracing + shaders-glsl + post-processing
+- "ink drawing of geometric forms" routes to line-art-contours + threejs-3d + post-processing
+- "cel shaded cartoon scene" routes to line-art-contours (toon + outlines) + threejs-3d
 
-Quick recipes compose multiple techniques for common goals like photorealistic SDF scenes, procedural landscapes, GPU simulation art, organic forms, and abstract shader art.
+Quick recipes compose multiple techniques for common goals like photorealistic SDF scenes, procedural landscapes, GPU simulation art, organic forms, abstract shader art, line art / ink drawings, and toon / cel shaded scenes.
 
 ## Reference Library
 
-The skill includes 29 deep reference files covering:
+The skill includes 30 deep reference files covering:
 
 **Algorithm families:**
 - **Color science** — Oklab/Oklch perceptual spaces, cosine gradient palettes, harmonic schemes
@@ -117,6 +120,7 @@ The skill includes 29 deep reference files covering:
 - **Anti-aliasing** — Supersampling (RGSS, stochastic), analytical AA with fwidth, temporal AA
 - **Procedural 2D patterns** — Checkerboard, brick, hex grid, Truchet, stripes in GLSL
 - **Analytic ray tracing** — Exact ray-primitive intersection, reflection, refraction
+- **Line art & contours** — Silhouette/crease/boundary extraction, screen-space edge detection, inverted-hull outlines, toon/cel shading, hatching, SVG vector export
 - **Sound synthesis** — Shader audio, oscillators, envelopes, WebAudio integration
 - **WebGL pitfalls** — Precision issues, common bugs, visual debugging, mobile compatibility
 

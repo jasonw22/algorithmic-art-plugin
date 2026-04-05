@@ -121,6 +121,7 @@ Identify whether the request maps to a known algorithm family or requires someth
 | `sound-synthesis.md` | Three.js Shader | Shader audio, oscillators, envelopes, drums, WebAudio integration |
 | `webgl-pitfalls.md` | Three.js Shader | Precision issues, common bugs, visual debugging, mobile compatibility |
 | `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
+| `line-art-contours.md` | Three.js Scene, Three.js Shader | Silhouette/crease/boundary extraction, screen-space edge detection, inverted-hull outlines, toon shading, SVG export, hatching |
 
 All algorithm families above apply to all output modes — the family reference files describe
 the math, while the mode-specific references cover the implementation patterns for each platform.
@@ -363,6 +364,10 @@ then pull in combinable references as needed for the full implementation.
 | "kaleidoscope", "mandala", "radial", "spiral" (shader) | `shaders-glsl.md` (Polar UV) | `voronoi-noise.md`, `post-processing.md` |
 | "checkerboard", "brick", "hex grid", "Truchet" (shader) | `procedural-2d-patterns.md` | `shaders-glsl.md`, `post-processing.md` |
 | "glass sphere", "mirror", "refraction" | `analytic-raytracing.md` | `shaders-glsl.md` (lighting), `post-processing.md` |
+| "line art", "contour", "outline", "silhouette", "ink drawing" | `line-art-contours.md` | `threejs-3d.md`, `post-processing.md` |
+| "toon", "cel shading", "cartoon", "comic" | `line-art-contours.md` (Toon + Outline) | `threejs-3d.md`, `post-processing.md` |
+| "wireframe art", "blueprint", "technical drawing", "pen and ink" | `line-art-contours.md` | `threejs-3d.md` |
+| "hatching", "cross-hatch", "engraving", "woodcut" | `line-art-contours.md` (Hatching) | `shaders-glsl.md`, `post-processing.md` |
 | "anti-aliased", "smooth edges", "supersampled" | `anti-aliasing.md` | (any scene technique) |
 | "audio", "sound", "music", "audio-reactive" | `sound-synthesis.md` | (any visual technique) |
 | "WebGL bug", "black screen", "precision", "debug" | `webgl-pitfalls.md` | — |
@@ -375,6 +380,8 @@ then pull in combinable references as needed for the full implementation.
 4. **Organic Forms**: `shaders-glsl.md` (smooth SDF unions + domain warping) → `voronoi-noise.md` (surface texture) → `post-processing.md` (bloom + vignette)
 5. **Abstract Shader Art**: `shaders-glsl.md` (Polar UV + noise) → `procedural-2d-patterns.md` → `post-processing.md` (chromatic aberration + film grain)
 6. **Stylized 2D Pattern**: `procedural-2d-patterns.md` → `voronoi-noise.md` → `post-processing.md` (CRT or vignette)
+7. **Line Art / Ink Drawing**: `line-art-contours.md` (edge extraction or screen-space detection) → `threejs-3d.md` (geometry) → `post-processing.md` (paper texture + vignette)
+8. **Toon / Cel Shaded**: `line-art-contours.md` (toon shading + outlines) → `threejs-3d.md` (scene setup) → `post-processing.md` (posterize + bloom)
 
 #### [nannou 2D] Build as Rust Project
 
