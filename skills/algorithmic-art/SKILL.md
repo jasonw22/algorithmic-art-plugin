@@ -18,6 +18,14 @@ description: >
   users want to make something "look beautiful" or "cool" using algorithms, even without
   technical terminology. Skip for: games with win/lose mechanics, data dashboards, general
   web/UI design, or algorithm implementations focused on correctness not aesthetics.
+argument-hint: "[mode] [description] — modes: p5, thing, scene, shader, nannou, nannou3d"
+allowed-tools: Read Write Glob Grep WebSearch WebFetch
+hooks:
+  PostToolUse:
+    - matcher: tool == 'Write' && output.filePath.endsWith('.html')
+      hooks:
+        - type: command
+          command: start "" "$output.filePath"
 ---
 
 # Algorithmic Art
@@ -40,7 +48,21 @@ When a user requests algorithmic art:
 
 ### 0. Choose the Output Mode
 
-**Before doing anything else**, ask the user which output format they want:
+**Check if the user specified a mode via arguments first.** When invoked as
+`/algorithmic-art [mode] [description]`, the first argument (`$0`) selects the mode directly:
+
+| `$0` value | Mode |
+|-------------|------|
+| `p5` | p5.js (HTML, 2D) |
+| `thing` | thi.ng (HTML, 2D) |
+| `scene` or `3d` | Three.js Scene (HTML, 3D) |
+| `shader` or `glsl` | Three.js Shader (HTML, GLSL) |
+| `nannou` or `rust` | nannou 2D (Rust) |
+| `nannou3d` | nannou 3D (Rust) |
+
+If `$0` matches one of these, skip the mode question entirely and use the remaining arguments
+as the art description. If `$0` doesn't match (or no arguments were given), ask the user which
+output format they want:
 
 1. **p5.js** (HTML, 2D) — Opens instantly in a browser. Best for interactive 2D parameter
    exploration, quick iteration, and sharing via a single file. Includes a sidebar with live

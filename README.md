@@ -28,6 +28,34 @@ Or simply describe what you want:
 
 The skill automatically selects the best output mode based on your request, or you can specify one explicitly.
 
+### Direct Mode Selection
+
+Skip the mode selection prompt by passing a mode as the first argument:
+
+```
+/algorithmic-art:algorithmic-art shader raymarched mandelbulb fractal
+/algorithmic-art:algorithmic-art p5 flow field with particle trails
+/algorithmic-art:algorithmic-art scene 3D generative sculpture
+/algorithmic-art:algorithmic-art thing perceptual color gradient art
+```
+
+| Mode Argument | Output |
+|---------------|--------|
+| `p5` | p5.js (HTML, 2D) |
+| `thing` | thi.ng (HTML, 2D) |
+| `scene` or `3d` | Three.js Scene (HTML, 3D) |
+| `shader` or `glsl` | Three.js Shader (HTML, GLSL) |
+| `nannou` or `rust` | nannou 2D (Rust) |
+| `nannou3d` | nannou 3D (Rust) |
+
+### Auto-Open
+
+Generated HTML files automatically open in your default browser when written, so you see results instantly.
+
+### Reduced Permission Prompts
+
+The skill declares its required tools (`Read`, `Write`, `Glob`, `Grep`, `WebSearch`, `WebFetch`) upfront, reducing interruptions during the creative workflow.
+
 ## Output Modes
 
 | Mode | Format | Best For |
