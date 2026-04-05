@@ -56,6 +56,60 @@ curl_y = -(noise(x+ε, y) - noise(x-ε, y)) / (2ε)
 
 This produces especially beautiful, fluid particle trails.
 
+### Noise Derivatives (Analytical Gradients)
+
+Most creative coding frameworks only expose the *value* of noise at a point. But the
+**gradient** (derivative) of the noise field — the direction and rate of steepest change —
+unlocks several powerful techniques. Cinder exposes this via `dfBm()`, which returns the
+gradient vector of fractal Brownian motion.
+
+**Why derivatives matter:**
+- **Flow field steering**: the gradient points "uphill" in the noise landscape. Rotating it
+  90° gives a divergence-free flow (equivalent to curl noise but analytically exact, not
+  approximated via finite differences)
+- **Surface normals from noise**: when displacing geometry by noise, the derivative gives
+  the exact surface normal without needing to sample neighboring points
+- **Shading procedural terrain**: compute lighting directly from the noise gradient instead
+  of reconstructing normals from the heightfield
+
+#### Finite-Difference Approximation (any platform)
+When analytical derivatives aren't available (p5.js, most JS noise libs), approximate
+the gradient by sampling noise at small offsets:
+
+```javascript
+function noiseGradient2D(x, y, eps = 0.001) {
+  const dndx = (noise(x + eps, y) - noise(x - eps, y)) / (2 * eps);
+  const dndy = (noise(x, y + eps) - noise(x, y - eps)) / (2 * eps);
+  return { x: dndx, y: dndy };
+}
+```
+
+This costs 4 noise evaluations per point (vs 1 for value-only). For fBm with N octaves,
+the derivative of the sum is the sum of the derivatives — apply the same
+lacunarity/persistence weighting to each octave's gradient.
+
+#### GLSL Analytical Derivatives
+In shader mode, simplex noise implementations can return value + gradient simultaneously
+at nearly zero extra cost. Use `vec3 snoise_grad(vec2 p)` where `.x` = value, `.yz` = gradient:
+
+```glsl
+// Noise-derived flow field (analytical, no finite differences)
+vec2 grad = snoise_grad(pos * scale).yz;
+vec2 flowDir = vec2(-grad.y, grad.x);  // rotate 90° for curl-like flow
+```
+
+#### Curl Noise from Derivatives
+The standard curl noise approximation (finite differences) costs 4–6 noise evaluations.
+With analytical gradients you get the same divergence-free field from just 1 evaluation:
+```glsl
+// 2D curl from analytical gradient — particles never converge or diverge
+vec2 g = noiseGradient(pos);
+vec2 curl = vec2(g.y, -g.x);
+```
+
+In 3D, curl requires the gradient of three noise functions (one per axis), but each
+gradient is free if using an analytical implementation.
+
 ### Domain Warping
 Feed noise into itself: `noise(x + noise(x,y), y + noise(x,y))`.
 Produces swirling, marble-like distortions. Stack multiple layers for extreme warping.

@@ -132,6 +132,8 @@ Identify whether the request maps to a known algorithm family or requires someth
 | `shaders-glsl.md` | Three.js Shader | GLSL, SDFs, raymarching, 3D fractals, noise in GLSL, volumetric rendering, CSG operations, PBR lighting, tone mapping, polar UV, easing, fog, blending |
 | `multipass-buffers.md` | Three.js Shader | Ping-pong framebuffers for GPU simulation (fluid, cellular automata, reaction-diffusion) |
 | `post-processing.md` | Three.js Shader, Three.js Scene | Bloom, vignette, chromatic aberration, film grain, CRT, tone mapping, color grading |
+| `gpu-particles.md` | Three.js Scene | GPGPU particle systems via GPUComputationRenderer, texture-based simulation, Verlet integration, curl noise forces, attractor patterns |
+| `superformula.md` | All modes | Gielis superformula for parametric organic shapes (2D + 3D supershapes), parameter morphing, preset library |
 | `voronoi-noise.md` | Three.js Shader, p5.js, thi.ng | Voronoi/cellular noise, distance metrics, F1/F2 patterns, edge detection, 3D Voronoi |
 | `path-tracing.md` | Three.js Shader | Monte Carlo path tracing, Cook-Torrance PBR, importance sampling, progressive accumulation |
 | `atmospheric-scattering.md` | Three.js Shader | Rayleigh/Mie scattering, physical sky, aerial perspective, god rays |

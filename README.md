@@ -83,7 +83,7 @@ The thi.ng mode includes a built-in utility library (`tng`) with:
 |--------|-------------|
 | Fractals & L-systems | Mandelbrot, Julia sets, recursive growth, tree grammars |
 | Reaction-diffusion | Turing patterns, Gray-Scott model, morphogenesis |
-| Flow fields & noise | Perlin/simplex noise, curl noise, particle traces |
+| Flow fields & noise | Perlin/simplex noise, curl noise, noise derivatives, particle traces |
 | Cellular automata | Wolfram rules, Conway's Game of Life, emergence |
 | Strange attractors | Lorenz, Clifford, de Jong, deterministic chaos |
 | Tiling & tessellation | Penrose, Truchet, aperiodic patterns, Islamic geometry |
@@ -99,6 +99,9 @@ The thi.ng mode includes a built-in utility library (`tng`) with:
 | GPU simulation | Multipass ping-pong buffers for reaction-diffusion, fluid, cellular automata on GPU |
 | Post-processing | Bloom, vignette, chromatic aberration, film grain, CRT, tone mapping |
 | Line art & contours | Silhouette/crease extraction, screen-space edge detection, toon shading, SVG export |
+| Superformula | Gielis parametric shapes (2D + 3D supershapes), organic form generation, parameter morphing |
+| GPU particle systems | GPGPU particles via GPUComputationRenderer, texture-based simulation, curl noise forces |
+| Procedural geometry | Vertex modifiers (twist, taper, noise displace, spherify, extrude-along-curve) |
 | Analytic ray tracing | Exact ray-primitive intersection, refraction, reflection |
 
 ## Features
@@ -124,13 +127,13 @@ Quick recipes compose multiple techniques for common goals like photorealistic S
 
 ## Reference Library
 
-The skill includes 30 deep reference files covering:
+The skill includes 32 deep reference files covering:
 
 **Algorithm families:**
 - **Color science** — Oklab/Oklch perceptual spaces, cosine gradient palettes, harmonic schemes
 - **2D SDFs** — Primitives, boolean operations, domain transforms, rendering techniques
 - **Tiling & tessellation** — Composable tessellation algorithms, SDF-based tiling, data-driven geometry
-- **Flow fields & noise** — Curl noise, fbm, functional composition patterns
+- **Flow fields & noise** — Curl noise, fbm, noise derivatives/gradients, functional composition patterns
 - **Fractals & L-systems** — SDF-based fractals, domain folding, L-system grammars
 - **Cellular automata** — Functional CA patterns, multi-state coloring
 - **Strange attractors** — Functional iteration, perceptual color mapping
@@ -152,9 +155,13 @@ The skill includes 30 deep reference files covering:
 - **Sound synthesis** — Shader audio, oscillators, envelopes, WebAudio integration
 - **WebGL pitfalls** — Precision issues, common bugs, visual debugging, mobile compatibility
 
+**New techniques (inspired by Cinder C++ framework):**
+- **GPU particles** — GPGPU particle systems via GPUComputationRenderer, Verlet integration, attractor forces, curl noise flow fields
+- **Superformula** — Gielis parametric equation for organic shapes (starfish, flowers, gears, blobs), 2D/3D implementations, parameter morphing presets
+
 **Platform references:**
 - **thi.ng ecosystem** — Functional creative coding, composable tessellation, genart-api
-- **Three.js 3D** — Scene graph, geometry, materials, lighting, instanced meshes
+- **Three.js 3D** — Scene graph, geometry, materials, lighting, instanced meshes, procedural geometry modifiers (twist, taper, noise displace, extrude-along-curve)
 - **nannou 2D/3D** — Rust creative coding, wgpu pipelines, WGSL shaders
 
 ## License

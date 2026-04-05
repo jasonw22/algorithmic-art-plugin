@@ -238,6 +238,163 @@ scene.add(new THREE.GridHelper(10, 10));
 scene.add(new THREE.PointLightHelper(pointLight, 0.5));
 ```
 
+## Procedural Geometry Modifiers
+
+Three.js doesn't have Cinder's built-in geometry modifier pipeline, but you can build
+equivalent transforms on `BufferGeometry` vertex data. These composable operations turn
+simple primitives into complex generative sculptures.
+
+### Twist
+Rotate vertices around an axis proportional to their position along that axis:
+```javascript
+function twist(geometry, axis, angle) {
+  const pos = geometry.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const t = axis === 'y' ? v.y : axis === 'x' ? v.x : v.z;
+    const a = t * angle;
+    const cos = Math.cos(a), sin = Math.sin(a);
+    if (axis === 'y') {
+      const x = v.x * cos - v.z * sin;
+      const z = v.x * sin + v.z * cos;
+      pos.setXYZ(i, x, v.y, z);
+    }
+    // extend for other axes as needed
+  }
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+}
+```
+
+### Taper
+Scale the cross-section along an axis by a function of position:
+```javascript
+function taper(geometry, axis, taperFn) {
+  // taperFn: (t) => scale, where t is normalized position along axis (0–1)
+  const pos = geometry.attributes.position;
+  const bbox = geometry.boundingBox || (geometry.computeBoundingBox(), geometry.boundingBox);
+  const min = axis === 'y' ? bbox.min.y : bbox.min.x;
+  const max = axis === 'y' ? bbox.max.y : bbox.max.x;
+  const v = new THREE.Vector3();
+
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const t = (v[axis] - min) / (max - min);
+    const s = taperFn(t);
+    if (axis === 'y') { v.x *= s; v.z *= s; }
+    else { v.y *= s; v.z *= s; }
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+}
+// Usage: taper(geo, 'y', t => 1 - t * 0.8)  // narrows toward top
+```
+
+### Noise Displacement
+Displace vertices along their normals by a noise field:
+```javascript
+function noiseDisplace(geometry, noiseScale, amplitude, noiseFn) {
+  geometry.computeVertexNormals();
+  const pos = geometry.attributes.position;
+  const norm = geometry.attributes.normal;
+  const v = new THREE.Vector3();
+  const n = new THREE.Vector3();
+
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    n.fromBufferAttribute(norm, i);
+    const d = noiseFn(v.x * noiseScale, v.y * noiseScale, v.z * noiseScale);
+    v.addScaledVector(n, d * amplitude);
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+}
+```
+
+### Spherical Projection
+Project any geometry onto a sphere (useful for wrapping flat patterns onto globes):
+```javascript
+function spherify(geometry, radius, blend = 1.0) {
+  const pos = geometry.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const spherePos = v.clone().normalize().multiplyScalar(radius);
+    v.lerp(spherePos, blend);
+    pos.setXYZ(i, v.x, v.y, v.z);
+  }
+  pos.needsUpdate = true;
+  geometry.computeVertexNormals();
+}
+```
+
+### Extrude Along Curve
+Create a mesh by sweeping a 2D cross-section along a 3D curve. Three.js provides
+`ExtrudeGeometry` for shapes and `TubeGeometry` for circular cross-sections, but for
+arbitrary profiles:
+
+```javascript
+function extrudeAlongCurve(shape2D, curve3D, steps, scaleFunc) {
+  // shape2D: array of THREE.Vector2 (cross-section outline)
+  // curve3D: THREE.Curve3 (spine)
+  // scaleFunc: (t) => float (optional cross-section scaling)
+  const frames = curve3D.computeFrenetFrames(steps);
+  const vertices = [];
+  const indices = [];
+  const N = shape2D.length;
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const pos = curve3D.getPointAt(t);
+    const normal = frames.normals[i];
+    const binormal = frames.binormals[i];
+    const s = scaleFunc ? scaleFunc(t) : 1;
+
+    for (let j = 0; j < N; j++) {
+      const pt = shape2D[j];
+      const x = pos.x + (pt.x * normal.x + pt.y * binormal.x) * s;
+      const y = pos.y + (pt.x * normal.y + pt.y * binormal.y) * s;
+      const z = pos.z + (pt.x * normal.z + pt.y * binormal.z) * s;
+      vertices.push(x, y, z);
+    }
+  }
+
+  // Connect rings into triangles
+  for (let i = 0; i < steps; i++) {
+    for (let j = 0; j < N; j++) {
+      const a = i * N + j;
+      const b = i * N + (j + 1) % N;
+      const c = (i + 1) * N + j;
+      const d = (i + 1) * N + (j + 1) % N;
+      indices.push(a, c, b, b, c, d);
+    }
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+  return geo;
+}
+```
+
+### Composing Modifiers
+Chain modifiers for complex effects. Order matters — twist then taper produces different
+results than taper then twist:
+```javascript
+const geo = new THREE.CylinderGeometry(1, 1, 4, 32, 64);
+twist(geo, 'y', 2.0);
+taper(geo, 'y', t => 1 - t * 0.6);
+noiseDisplace(geo, 2.0, 0.15, noise3D);
+```
+
+**Performance note**: vertex manipulation runs on CPU. For meshes over ~100K vertices,
+consider doing the equivalent in a vertex shader for real-time animation. CPU modifiers
+are best applied once at setup time.
+
 ## Common 3D Generative Patterns
 
 ### Generative Sculpture (deformed mesh)
