@@ -143,6 +143,7 @@ Identify whether the request maps to a known algorithm family or requires someth
 | `procedural-2d-patterns.md` | Three.js Shader | Checkerboard, brick, hex grid, Truchet, stripes, polka dots in GLSL |
 | `analytic-raytracing.md` | Three.js Shader | Exact ray-primitive intersection (sphere, box, plane, cylinder), reflection/refraction |
 | `sound-synthesis.md` | Three.js Shader | Shader audio, oscillators, envelopes, drums, WebAudio integration |
+| `audio-reactive-mappings.md` | All modes | Audio analysis, frequency band extraction, smoothing, beat detection, audio-to-visual property mappings, audio-driven post-processing |
 | `webgl-pitfalls.md` | Three.js Shader | Precision issues, common bugs, visual debugging, mobile compatibility |
 | `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
 | `line-art-contours.md` | Three.js Scene, Three.js Shader | Silhouette/crease/boundary extraction, screen-space edge detection, inverted-hull outlines, toon shading, SVG export, hatching |
@@ -393,7 +394,7 @@ then pull in combinable references as needed for the full implementation.
 | "wireframe art", "blueprint", "technical drawing", "pen and ink" | `line-art-contours.md` | `threejs-3d.md` |
 | "hatching", "cross-hatch", "engraving", "woodcut" | `line-art-contours.md` (Hatching) | `shaders-glsl.md`, `post-processing.md` |
 | "anti-aliased", "smooth edges", "supersampled" | `anti-aliasing.md` | (any scene technique) |
-| "audio", "sound", "music", "audio-reactive" | `sound-synthesis.md` | (any visual technique) |
+| "audio", "sound", "music", "audio-reactive" | `audio-reactive-mappings.md` | `sound-synthesis.md`, (any visual technique) |
 | "WebGL bug", "black screen", "precision", "debug" | `webgl-pitfalls.md` | — |
 
 **Quick Recipes** — common multi-technique compositions:
