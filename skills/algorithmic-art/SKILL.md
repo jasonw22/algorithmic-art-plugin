@@ -2,9 +2,9 @@
 name: algorithmic-art
 description: >
   Use this skill to produce algorithmic art whenever a user wants visual art, beauty,
-  or aesthetic exploration through code and math. Supports six output modes: p5.js 2D (HTML),
+  or aesthetic exploration through code and math. Supports seven output modes: p5.js 2D (HTML),
   thi.ng functional Canvas 2D (HTML), Three.js 3D scene (HTML), Three.js GLSL shader (HTML),
-  nannou 2D (Rust), or nannou 3D (Rust).
+  WebGPU compute + WGSL (HTML), nannou 2D (Rust), or nannou 3D (Rust).
   This is the default skill for ANY request where the primary goal is creating something visually
   compelling through computation. Trigger for: generative art, fractal explorers, beautiful
   cellular automata (Conway's Game of Life), procedural patterns, particle animations, Penrose
@@ -13,12 +13,14 @@ description: >
   simulations, recursive subdivision, album/poster art from code, animated backgrounds from
   particles/algorithms, interactive parameter-driven sketches, high-res generative prints,
   educational math visualizations, 3D generative sculptures, raymarched fractals (Mandelbulb,
-  Menger sponge), volumetric rendering, SDF art, GLSL shader art, 3D particle systems, 3D
-  strange attractors, generative architecture, and procedural landscapes. Also trigger when
-  users want to make something "look beautiful" or "cool" using algorithms, even without
-  technical terminology. Skip for: games with win/lose mechanics, data dashboards, general
-  web/UI design, or algorithm implementations focused on correctness not aesthetics.
-argument-hint: "[mode] [description] — modes: p5, thing, scene, shader, nannou, nannou3d"
+  Menger sponge), volumetric rendering, SDF art, GLSL shader art, WebGPU compute shaders, WGSL,
+  Particle Life, MPM fluid / particle-based fluid simulation, large-scale particle systems,
+  3D particle systems, 3D strange attractors, generative architecture, procedural landscapes,
+  and plotter / AxiDraw output. Also trigger when users want to make something "look beautiful"
+  or "cool" using algorithms, even without technical terminology. Skip for: games with win/lose
+  mechanics, data dashboards, general web/UI design, or algorithm implementations focused on
+  correctness not aesthetics.
+argument-hint: "[mode] [description] — modes: p5, thing, scene, shader, webgpu, nannou, nannou3d"
 allowed-tools: Read Write Glob Grep WebSearch WebFetch
 hooks:
   PostToolUse:
@@ -30,11 +32,12 @@ hooks:
 
 # Algorithmic Art
 
-Create algorithmic art in one of six output modes:
+Create algorithmic art in one of seven output modes:
 - **p5.js** — standalone 2D HTML files with interactive parameter controls and PNG/SVG export
 - **thi.ng** — standalone 2D HTML files with built-in perceptual color (Oklab), 2D SDFs, seeded PRNG, and clean SVG export
 - **Three.js Scene** — standalone 3D HTML files with scene graph, lighting, OrbitControls, and PNG export
 - **Three.js Shader** — standalone HTML files running a fullscreen GLSL fragment shader (raymarching, SDFs, fractals, volumetric)
+- **WebGPU** — standalone HTML files with WGSL compute + render pipelines. Best for large-scale particle systems (Particle Life, MPM fluid), compute-heavy simulation, anything that outgrows WebGL's ping-pong model
 - **nannou 2D** — compiled Rust applications using [nannou](https://nannou.cc) for 2D creative coding
 - **nannou 3D** — compiled Rust applications using nannou with 3D perspective camera and wgpu
 
@@ -57,6 +60,7 @@ When a user requests algorithmic art:
 | `thing` | thi.ng (HTML, 2D) |
 | `scene` or `3d` | Three.js Scene (HTML, 3D) |
 | `shader` or `glsl` | Three.js Shader (HTML, GLSL) |
+| `webgpu` or `compute` or `wgsl` | WebGPU Compute + WGSL (HTML) |
 | `nannou` or `rust` | nannou 2D (Rust) |
 | `nannou3d` | nannou 3D (Rust) |
 
@@ -79,9 +83,14 @@ output format they want:
    effects: raymarched SDFs, 3D fractals (Mandelbulb, Menger sponge), volumetric rendering,
    GPU reaction-diffusion, domain warping, and Shadertoy-style pieces. Same sidebar and seed
    system. Requires GLSL knowledge.
-5. **nannou 2D** (Rust) — Compiled native app. Best for high-performance 2D rendering,
+5. **WebGPU** (HTML, GPU compute) — Opens instantly in a browser (Chrome/Edge/Safari 17+).
+   Best for large particle counts, MLS-MPM fluid, Particle Life, compute-heavy simulation, and
+   any piece that outgrows the WebGL ping-pong model. Exposes a compute+render pipeline via
+   three sketch hooks (`sketchSetup`, `computePass`, `renderPass`). Same sidebar and seed
+   system. Requires WGSL knowledge.
+6. **nannou 2D** (Rust) — Compiled native app. Best for high-performance 2D rendering,
    large-scale generative prints, and users who prefer Rust.
-6. **nannou 3D** (Rust) — Compiled native app. Best for high-performance 3D particle systems,
+7. **nannou 3D** (Rust) — Compiled native app. Best for high-performance 3D particle systems,
    3D attractors, custom wgpu shader pipelines, and Rust-based 3D generative work.
 
 If the user has already specified a preference (e.g., "make me a nannou app", "p5.js sketch",
@@ -94,9 +103,11 @@ one choice obvious, infer without asking:
 - "raymarching" / "SDF" / "Mandelbulb" / "shader" / "GLSL" → Three.js Shader
 - "fractal" without "3D" → p5.js (2D); "3D fractal" → Three.js Shader
 - "SVG export" / "vector output" / "plotter-ready" → thi.ng (best SVG support)
+- "WebGPU" / "compute shader" / "WGSL" / "particle life" / "MPM fluid" / "100k+ particles" → WebGPU
+- "plotter" / "AxiDraw" / "pen plotter" / "watercolor-with-plotter" / "hybrid analog" → thi.ng (for SVG) + consult `references/plotter-workflow.md`
 
 The rest of this workflow applies to all modes. Sections specific to one mode are marked
-**[p5.js]**, **[thi.ng]**, **[Three.js Scene]**, **[Three.js Shader]**, **[nannou 2D]**, or **[nannou 3D]**.
+**[p5.js]**, **[thi.ng]**, **[Three.js Scene]**, **[Three.js Shader]**, **[WebGPU]**, **[nannou 2D]**, or **[nannou 3D]**.
 
 ### 1. Interpret the Request
 
@@ -113,6 +124,10 @@ Identify whether the request maps to a known algorithm family or requires someth
 | Tiling & tessellation | `tiling-tessellation.md` | Penrose, Truchet, aperiodic order, Islamic geometry |
 | Recursion & subdivision | `recursion-subdivision.md` | Mondrian-style, quadtree, space partitioning, compositional hierarchy |
 | Generative agents & typography | `generative-agents.md` | Maeda, Reas, autonomous agents, flocking, steering behaviors |
+| WebGPU compute | `webgpu-compute.md` | WGSL, compute shaders, storage buffers, ping-pong compute, large-scale GPU simulation |
+| Particle fluid (MPM) | `mpm-fluid.md` | Material Point Method, particle-grid transfers, APIC/MLS, real-time fluid |
+| Particle Life | `particle-life.md` | Asymmetric-force emergent swarms, predator-prey dynamics, species force matrix |
+| Plotter workflow | `plotter-workflow.md` | AxiDraw, path planning (vpype/Saxi), pen/medium choice, multi-pass, watercolor-with-plotter |
 
 **Cross-cutting references** (applicable to all algorithm families and output modes):
 
@@ -147,6 +162,10 @@ Identify whether the request maps to a known algorithm family or requires someth
 | `webgl-pitfalls.md` | Three.js Shader | Precision issues, common bugs, visual debugging, mobile compatibility |
 | `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
 | `line-art-contours.md` | Three.js Scene, Three.js Shader | Silhouette/crease/boundary extraction, screen-space edge detection, inverted-hull outlines, toon shading, SVG export, hatching |
+| `webgpu-compute.md` | WebGPU | WGSL primer, compute pipeline model, storage buffers, uniform buffer layout, template hook API, atomic P2G pattern |
+| `mpm-fluid.md` | WebGPU (primary); Three.js Shader (grid-based fluid alternative) | MLS-MPM particle fluid, 5-pass frame structure, quadratic B-spline weights, constitutive models, atomic P2G |
+| `particle-life.md` | WebGPU (primary); p5.js, nannou (CPU variants) | Asymmetric force matrix, species presets, O(N²) WGSL baseline, spatial hashing for large N |
+| `plotter-workflow.md` | thi.ng (primary), any mode producing SVG | Path planning (vpype/Saxi), pen/medium selection, multi-pass color, watercolor-with-plotter, AxiDraw settings |
 
 All algorithm families above apply to all output modes — the family reference files describe
 the math, while the mode-specific references cover the implementation patterns for each platform.
@@ -396,6 +415,9 @@ then pull in combinable references as needed for the full implementation.
 | "anti-aliased", "smooth edges", "supersampled" | `anti-aliasing.md` | (any scene technique) |
 | "audio", "sound", "music", "audio-reactive" | `audio-reactive-mappings.md` | `sound-synthesis.md`, (any visual technique) |
 | "WebGL bug", "black screen", "precision", "debug" | `webgl-pitfalls.md` | — |
+| "particle life", "asymmetric swarm", "predator-prey particles" (→ switch to WebGPU mode) | `particle-life.md` | `webgpu-compute.md`, `color-science.md`, `multipass-buffers.md` (trails) |
+| "MPM fluid", "particle fluid", "splash", "droplets" (→ switch to WebGPU mode) | `mpm-fluid.md` | `webgpu-compute.md`, `gpu-particles.md` |
+| "WebGPU", "compute shader", "WGSL", "large particle count" (→ switch to WebGPU mode) | `webgpu-compute.md` | technique-specific reference per piece |
 
 **Quick Recipes** — common multi-technique compositions:
 
@@ -407,6 +429,82 @@ then pull in combinable references as needed for the full implementation.
 6. **Stylized 2D Pattern**: `procedural-2d-patterns.md` → `voronoi-noise.md` → `post-processing.md` (CRT or vignette)
 7. **Line Art / Ink Drawing**: `line-art-contours.md` (edge extraction or screen-space detection) → `threejs-3d.md` (geometry) → `post-processing.md` (paper texture + vignette)
 8. **Toon / Cel Shaded**: `line-art-contours.md` (toon shading + outlines) → `threejs-3d.md` (scene setup) → `post-processing.md` (posterize + bloom)
+9. **Large-Scale Particle Simulation** (WebGPU mode): `webgpu-compute.md` (compute+render pattern) → technique-specific (`particle-life.md`, `mpm-fluid.md`, or custom) → `color-science.md` (species palettes) → optional `multipass-buffers.md` (trails) → optional `post-processing.md` (bloom)
+10. **Plotted Hybrid Piece** (thi.ng mode for geometry → physical output): `thing-2d.md` (composition + `sketchSVG()`) → `line-art-contours.md` (if contour/hatching-based) → `plotter-workflow.md` (path optimization, pen choice, multi-pass)
+
+#### [WebGPU] Build as WebGPU Compute HTML
+
+Read the WebGPU template at `assets/template-webgpu.html`. This template must not be modified
+— it provides:
+- Full-viewport WebGPU canvas with graceful fallback for unsupported browsers
+- Shared uniform buffer layout already bound at `@group(0) @binding(0)` of your WGSL (time,
+  resolution, seed, count, dt; see the layout comment in the template)
+- Same sidebar control panel, seed system, PNG export, and resize handling as the other HTML
+  templates
+- `window.seededRandom()` for CPU-side deterministic randomness (mulberry32), seeded from the
+  current seed input
+
+Set `renderMode: "webgpu"` in SKETCH_META. Copy the template and fill in the three designated
+sections — metadata, PARAMS, and the three sketch hooks:
+
+```javascript
+const SKETCH_META = {
+  title: "Piece Title",
+  concept: "Brief philosophical description",
+  technique: "Algorithm family name",
+  renderMode: "webgpu"
+};
+
+const PARAMS = {
+  // Same format as all other templates. Changing `count` triggers a sketch rebuild.
+};
+
+// Called once (and again whenever the seed changes or a rebuild-triggering param changes).
+// Return a state object whose fields are used by computePass/renderPass.
+function sketchSetup(device, context, format, params, seed, uniformBuffer) {
+  // Create shader module(s), storage buffers, pipelines, bind groups.
+  // Bind `uniformBuffer` at @group(0) @binding(0) in your WGSL.
+  // For ping-pong compute, create two storage buffers and two bind groups; alternate between them.
+  return { /* handles used by computePass and renderPass */ };
+}
+
+// Called every frame, before renderPass. Record compute dispatches on `encoder`.
+function computePass(device, encoder, state, params, time, delta) {
+  // device.queue.writeBuffer(...) any per-frame uniforms or params
+  const cp = encoder.beginComputePass();
+  cp.setPipeline(state.computePipeline);
+  cp.setBindGroup(0, state.bindGroup);
+  cp.dispatchWorkgroups(Math.ceil(state.count / 64));
+  cp.end();
+}
+
+// Called every frame, after computePass. Record the render pass onto `view` (the current
+// canvas view).
+function renderPass(device, encoder, view, state, params, time, delta) {
+  const rp = encoder.beginRenderPass({
+    colorAttachments: [{
+      view, loadOp: "clear", storeOp: "store",
+      clearValue: { r: 0, g: 0, b: 0, a: 1 },
+    }],
+  });
+  rp.setPipeline(state.renderPipeline);
+  rp.setBindGroup(0, state.bindGroup);
+  rp.draw(6, state.count);
+  rp.end();
+}
+```
+
+See `references/webgpu-compute.md` for the WGSL primer, pipeline setup details, uniform-buffer
+layout, atomic patterns for scatter writes (used in MPM), and library-ecosystem notes
+(POINTS, Three.js TSL, Slang). Technique-specific references:
+- `references/mpm-fluid.md` for particle-based fluid (MLS-MPM)
+- `references/particle-life.md` for asymmetric-force swarm systems
+- `references/gpu-particles.md` (WebGL predecessor) for algorithmic patterns that apply to
+  both substrates (forces, integrators, respawn strategies)
+
+**Browser note:** Chrome, Edge, Safari 17+ ship WebGPU by default. Firefox requires
+enabling `dom.webgpu.enabled` in `about:config` as of early 2026. The template shows a
+friendly fallback message when WebGPU isn't available.
 
 #### [nannou 2D] Build as Rust Project
 

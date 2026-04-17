@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title id="sketch-title">Algorithmic Art — WebGPU</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a1a; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e0e0e0; }
+
+  #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+  #canvas-container canvas { display: block; width: 100%; height: 100%; }
+
+  #no-webgpu {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    z-index: 100; background: rgba(26, 26, 26, 0.98); padding: 24px; text-align: center;
+  }
+  #no-webgpu .box {
+    max-width: 560px; padding: 28px 36px; background: #232323;
+    border: 1px solid #444; border-radius: 8px; line-height: 1.55;
+  }
+  #no-webgpu h2 { font-size: 1.35em; color: #d97757; margin-bottom: 12px; }
+  #no-webgpu p { font-size: 0.95em; color: #ccc; margin-bottom: 10px; }
+  #no-webgpu code { background: #1a1a1a; padding: 2px 6px; border-radius: 3px; font-size: 0.88em; }
+
+  #sidebar-toggle {
+    position: fixed; top: 12px; right: 12px; z-index: 30;
+    background: rgba(30,30,30,0.7); color: #ccc; border: 1px solid #555;
+    width: 36px; height: 36px; border-radius: 6px; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  #sidebar-toggle:hover { background: rgba(60,60,60,0.9); }
+
+  #sidebar {
+    position: fixed; top: 0; right: 0; z-index: 20;
+    width: 320px; height: 100vh; overflow-y: auto; overflow-x: hidden;
+    background: rgba(22,22,22,0.92); backdrop-filter: blur(12px);
+    border-left: 1px solid #333; padding: 16px;
+    transform: translateX(100%); transition: transform 0.25s ease;
+  }
+  #sidebar.open { transform: translateX(0); }
+  #sidebar h1 { font-size: 1.2em; color: #fff; margin-bottom: 4px; }
+  #sidebar .concept { font-size: 0.8em; color: #999; font-style: italic; margin-bottom: 16px; line-height: 1.4; }
+
+  .ctrl-section { margin-bottom: 20px; }
+  .ctrl-section h3 {
+    font-size: 0.85em; font-weight: 600; color: #aaa; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #333;
+  }
+  .ctrl-group { margin-bottom: 14px; }
+  .ctrl-group label { display: block; font-size: 0.8em; color: #ccc; margin-bottom: 4px; }
+  .ctrl-row { display: flex; align-items: center; gap: 10px; }
+
+  .ctrl-row input[type="range"] {
+    flex: 1; height: 4px; -webkit-appearance: none; appearance: none;
+    background: #444; border-radius: 2px; outline: none;
+  }
+  .ctrl-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px;
+    background: #d97757; border-radius: 50%; cursor: pointer;
+  }
+  .ctrl-row input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; background: #d97757;
+    border-radius: 50%; border: none; cursor: pointer;
+  }
+  .ctrl-val {
+    font-family: 'Courier New', monospace; font-size: 0.75em; color: #888;
+    min-width: 50px; text-align: right;
+  }
+
+  select.ctrl-select {
+    width: 100%; padding: 6px 8px; background: #2a2a2a; color: #ddd;
+    border: 1px solid #444; border-radius: 4px; font-size: 0.8em; cursor: pointer;
+  }
+  input[type="color"].ctrl-color {
+    width: 32px; height: 28px; border: 1px solid #444; border-radius: 4px;
+    background: none; padding: 0; cursor: pointer;
+  }
+  .color-hex { font-family: 'Courier New', monospace; font-size: 0.75em; color: #888; }
+  input[type="checkbox"].ctrl-check {
+    width: 16px; height: 16px; accent-color: #d97757; cursor: pointer;
+  }
+
+  .seed-row { display: flex; gap: 6px; margin-bottom: 8px; }
+  .seed-input {
+    flex: 1; padding: 6px 8px; background: #2a2a2a; color: #ddd;
+    border: 1px solid #444; border-radius: 4px; font-family: 'Courier New', monospace;
+    font-size: 0.85em; text-align: center;
+  }
+  .seed-input:focus { outline: none; border-color: #d97757; }
+
+  .btn {
+    padding: 6px 12px; border: 1px solid #555; border-radius: 4px;
+    background: #333; color: #ddd; font-size: 0.8em; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: #4a4a4a; }
+  .btn-accent { background: #d97757; border-color: #d97757; color: #fff; }
+  .btn-accent:hover { background: #c4613f; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .btn-row .btn { flex: 1; text-align: center; }
+
+  #bottom-bar {
+    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 10;
+    display: flex; justify-content: center; gap: 8px; padding: 10px;
+    background: rgba(0,0,0,0.5);
+  }
+  #bottom-bar .btn { min-width: 80px; }
+</style>
+</head>
+<body>
+
+<div id="canvas-container"><canvas id="gpu-canvas"></canvas></div>
+
+<div id="no-webgpu">
+  <div class="box">
+    <h2>WebGPU not available</h2>
+    <p>This piece requires WebGPU, which your current browser does not expose.</p>
+    <p>Try a recent <b>Chrome</b>, <b>Edge</b>, or <b>Safari 17+</b>.<br>
+       In Firefox, enable <code>dom.webgpu.enabled</code> in <code>about:config</code>.</p>
+    <p style="margin-top: 16px; font-size: 0.85em; color: #888;"
+       id="webgpu-error-detail"></p>
+  </div>
+</div>
+
+<button id="sidebar-toggle" title="Toggle controls">&#9776;</button>
+
+<div id="sidebar">
+  <h1 id="display-title"></h1>
+  <div class="concept" id="display-concept"></div>
+
+  <div class="ctrl-section" id="section-seed">
+    <h3>Seed</h3>
+    <div class="seed-row">
+      <input type="number" class="seed-input" id="seed-input" value="12345">
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="btn-seed-prev">&larr; Prev</button>
+      <button class="btn" id="btn-seed-next">Next &rarr;</button>
+      <button class="btn btn-accent" id="btn-seed-random">Random</button>
+    </div>
+  </div>
+
+  <div id="param-sections"></div>
+</div>
+
+<div id="bottom-bar">
+  <button class="btn" id="btn-png">Export PNG</button>
+  <button class="btn" id="btn-pause">Pause</button>
+  <button class="btn" id="btn-reset">Reset</button>
+</div>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════════
+// DO NOT MODIFY ABOVE THIS LINE — TEMPLATE INFRASTRUCTURE
+// ═══════════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 1: METADATA — Fill in for each piece
+// ═══════════════════════════════════════════════════════════════
+const SKETCH_META = {
+  title: "WebGPU Particle Cloud",
+  concept: "Demonstration: 8192 particles orbiting a gentle attractor, integrated and rendered entirely on the GPU via a compute pass + instanced render pass.",
+  technique: "WebGPU compute + instanced render",
+  renderMode: "webgpu"
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 2: PARAMETERS — Define interactive controls
+//
+// Same format as every other template:
+//   Slider:   { value: 0.5, min: 0, max: 1, step: 0.01, label: "Name", folder: "Section" }
+//   Dropdown: { value: "opt1", options: ["opt1", "opt2"], label: "Name", folder: "Section" }
+//   Color:    { value: "#ff0000", type: "color", label: "Name", folder: "Section" }
+//   Boolean:  { value: true, label: "Name", folder: "Section" }
+// ═══════════════════════════════════════════════════════════════
+const PARAMS = {
+  count: { value: 8192, min: 1024, max: 65536, step: 1024, label: "Population", folder: "Structure" },
+  attract: { value: 0.35, min: 0.0, max: 1.0, step: 0.01, label: "Attraction", folder: "Behavior" },
+  swirl:   { value: 0.5,  min: 0.0, max: 2.0, step: 0.01, label: "Swirl",       folder: "Behavior" },
+  friction:{ value: 0.02, min: 0.0, max: 0.2, step: 0.001, label: "Friction",   folder: "Behavior" },
+  size:    { value: 2.0,  min: 0.5, max: 8.0, step: 0.1,  label: "Point size",  folder: "Appearance" },
+  bg:      { value: "#0a0a14", type: "color", label: "Background", folder: "Appearance" },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 3: SKETCH LOGIC — Your algorithm goes here
+//
+// WebGPU mode uses three hooks:
+//
+//   sketchSetup(device, context, format, params, seed, uniformBuffer) -> state
+//     Called once (and again whenever the seed changes). Create shader modules,
+//     buffers, pipelines, and bind groups. Return a state object used by the
+//     compute and render passes.
+//
+//     `uniformBuffer` is a shared uniform buffer the template keeps in sync with:
+//       struct Uniforms {
+//         time: f32,
+//         resolution: vec2<f32>,
+//         seed: f32,
+//         count: u32,
+//         dt: f32,
+//         _pad0: f32, _pad1: f32, _pad2: f32,   // round to 32 bytes
+//       };
+//     Bind it in your WGSL at @group(0) @binding(0). If you need more uniforms,
+//     create your own uniform buffer and write to it from `computePass`.
+//
+//     `window.seededRandom()` is available for CPU-side deterministic randomness.
+//
+//   computePass(device, encoder, state, params, time, delta)
+//     Called every frame before renderPass. Record compute dispatches on `encoder`.
+//
+//   renderPass(device, encoder, view, state, params, time, delta)
+//     Called every frame after computePass. Record the render pass onto the
+//     provided canvas `view`.
+//
+// Storage buffers persist across frames (for ping-pong, create two buffers in
+// sketchSetup and alternate bind groups inside computePass).
+// ═══════════════════════════════════════════════════════════════
+
+const UNIFORMS_WGSL = /* wgsl */ `
+struct Uniforms {
+  // 32-byte layout matching the template's uniform buffer.
+  // time: f32 @0; resolution: vec2<f32> @8; seed: f32 @16;
+  // count: u32 @20; dt: f32 @24; (struct rounded to 32 via vec2 alignment)
+  time: f32,
+  resolution: vec2<f32>,
+  seed: f32,
+  count: u32,
+  dt: f32,
+};
+
+struct Particle {
+  pos: vec2<f32>,
+  vel: vec2<f32>,
+};
+
+struct Params {
+  attract: f32,
+  swirl: f32,
+  friction: f32,
+  size: f32,
+};
+`;
+
+const COMPUTE_SHADER = /* wgsl */ UNIFORMS_WGSL + `
+@group(0) @binding(0) var<uniform>              U:         Uniforms;
+@group(0) @binding(1) var<storage, read_write>  particles: array<Particle>;
+@group(0) @binding(2) var<uniform>              P:         Params;
+
+@compute @workgroup_size(64)
+fn cs_main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= U.count) { return; }
+
+  var p = particles[i];
+
+  let r = length(p.pos);
+  let eps = 0.001;
+  let to_center = -p.pos / max(r, eps);
+  let tangent = vec2<f32>(-to_center.y, to_center.x);
+
+  let pull = P.attract * (1.0 - exp(-r * 0.5));
+  let force = to_center * pull + tangent * P.swirl * 0.3 / max(r, 0.2);
+
+  p.vel = p.vel + force * U.dt;
+  p.vel = p.vel * (1.0 - P.friction);
+  p.pos = p.pos + p.vel * U.dt;
+
+  particles[i] = p;
+}
+`;
+
+const RENDER_SHADER = /* wgsl */ UNIFORMS_WGSL + `
+@group(0) @binding(0) var<uniform>          U:         Uniforms;
+@group(0) @binding(1) var<storage, read>    particles: array<Particle>;
+@group(0) @binding(2) var<uniform>          P:         Params;
+
+struct VsOut {
+  @builtin(position) clip: vec4<f32>,
+  @location(0) color: vec3<f32>,
+  @location(1) quad_uv: vec2<f32>,
+};
+
+@vertex
+fn vs_main(@builtin(vertex_index) vid: u32,
+           @builtin(instance_index) iid: u32) -> VsOut {
+  var quad = array<vec2<f32>, 6>(
+    vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0, -1.0), vec2<f32>(-1.0,  1.0),
+    vec2<f32>(-1.0,  1.0), vec2<f32>( 1.0, -1.0), vec2<f32>( 1.0,  1.0),
+  );
+  let q = quad[vid];
+
+  let p = particles[iid];
+
+  let aspect = U.resolution.x / U.resolution.y;
+  let size_px = P.size * 2.0;
+  let size_ndc = vec2<f32>(size_px / U.resolution.x, size_px / U.resolution.y);
+  let world_pos = p.pos / vec2<f32>(aspect, 1.0);
+  let pos_ndc = world_pos + q * size_ndc;
+
+  let speed = length(p.vel);
+  let hue = fract(0.55 + speed * 0.8);
+
+  var out: VsOut;
+  out.clip = vec4<f32>(pos_ndc, 0.0, 1.0);
+  out.color = vec3<f32>(
+    0.5 + 0.5 * cos(6.28318 * (hue + 0.00)),
+    0.5 + 0.5 * cos(6.28318 * (hue + 0.33)),
+    0.5 + 0.5 * cos(6.28318 * (hue + 0.66))
+  );
+  out.quad_uv = q;
+  return out;
+}
+
+@fragment
+fn fs_main(in: VsOut) -> @location(0) vec4<f32> {
+  let d = length(in.quad_uv);
+  if (d > 1.0) { discard; }
+  let alpha = smoothstep(1.0, 0.2, d);
+  return vec4<f32>(in.color * alpha, alpha);
+}
+`;
+
+function sketchSetup(device, context, format, params, seed, uniformBuffer) {
+  const count = params.count | 0;
+  const PARTICLE_STRIDE = 4 * 4;   // 4 f32s = 16 bytes
+  const particleBytes = count * PARTICLE_STRIDE;
+
+  // Initial particle state — disk of particles at random positions, small random velocity
+  const rng = mulberry32(seed);
+  const initial = new Float32Array(count * 4);
+  for (let i = 0; i < count; i++) {
+    const theta = rng() * Math.PI * 2;
+    const r = Math.sqrt(rng()) * 0.8;
+    initial[i * 4 + 0] = Math.cos(theta) * r;     // pos.x
+    initial[i * 4 + 1] = Math.sin(theta) * r;     // pos.y
+    const vTheta = rng() * Math.PI * 2;
+    const vMag = 0.2 + rng() * 0.3;
+    initial[i * 4 + 2] = Math.cos(vTheta) * vMag; // vel.x
+    initial[i * 4 + 3] = Math.sin(vTheta) * vMag; // vel.y
+  }
+
+  const particleBuffer = device.createBuffer({
+    size: particleBytes,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+  });
+  device.queue.writeBuffer(particleBuffer, 0, initial);
+
+  // Per-sketch params uniform (separate from the template's core uniform buffer)
+  const paramsBuffer = device.createBuffer({
+    size: 16,  // 4 f32s
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+
+  const computeModule = device.createShaderModule({ code: COMPUTE_SHADER });
+  const renderModule  = device.createShaderModule({ code: RENDER_SHADER });
+
+  const computeBindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
+      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
+      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
+    ],
+  });
+  const renderBindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        buffer: { type: "uniform" } },
+      { binding: 1, visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "read-only-storage" } },
+      { binding: 2, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        buffer: { type: "uniform" } },
+    ],
+  });
+
+  const computePipeline = device.createComputePipeline({
+    layout: device.createPipelineLayout({ bindGroupLayouts: [computeBindGroupLayout] }),
+    compute: { module: computeModule, entryPoint: "cs_main" },
+  });
+
+  const renderPipeline = device.createRenderPipeline({
+    layout: device.createPipelineLayout({ bindGroupLayouts: [renderBindGroupLayout] }),
+    vertex: { module: renderModule, entryPoint: "vs_main" },
+    fragment: {
+      module: renderModule, entryPoint: "fs_main",
+      targets: [{
+        format,
+        blend: {
+          color: { srcFactor: "one", dstFactor: "one", operation: "add" },
+          alpha: { srcFactor: "one", dstFactor: "one", operation: "add" },
+        },
+      }],
+    },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const computeBindGroup = device.createBindGroup({
+    layout: computeBindGroupLayout,
+    entries: [
+      { binding: 0, resource: { buffer: uniformBuffer } },
+      { binding: 1, resource: { buffer: particleBuffer } },
+      { binding: 2, resource: { buffer: paramsBuffer } },
+    ],
+  });
+  const renderBindGroup = device.createBindGroup({
+    layout: renderBindGroupLayout,
+    entries: [
+      { binding: 0, resource: { buffer: uniformBuffer } },
+      { binding: 1, resource: { buffer: particleBuffer } },
+      { binding: 2, resource: { buffer: paramsBuffer } },
+    ],
+  });
+
+  return {
+    count,
+    particleBuffer,
+    paramsBuffer,
+    computePipeline,
+    renderPipeline,
+    computeBindGroup,
+    renderBindGroup,
+  };
+}
+
+function computePass(device, encoder, state, params, time, delta) {
+  // Write per-frame params
+  device.queue.writeBuffer(state.paramsBuffer, 0, new Float32Array([
+    params.attract, params.swirl, params.friction, params.size,
+  ]));
+
+  const cp = encoder.beginComputePass();
+  cp.setPipeline(state.computePipeline);
+  cp.setBindGroup(0, state.computeBindGroup);
+  cp.dispatchWorkgroups(Math.ceil(state.count / 64));
+  cp.end();
+}
+
+function renderPass(device, encoder, view, state, params, time, delta) {
+  const rp = encoder.beginRenderPass({
+    colorAttachments: [{
+      view, loadOp: "clear", storeOp: "store",
+      clearValue: hexToClear(params.bg),
+    }],
+  });
+  rp.setPipeline(state.renderPipeline);
+  rp.setBindGroup(0, state.renderBindGroup);
+  rp.draw(6, state.count);
+  rp.end();
+}
+
+// Small helpers — available inside sketch code.
+function mulberry32(seed) {
+  return function () {
+    seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+    let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function hexToClear(hex) {
+  const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
+  if (!m) return { r: 0, g: 0, b: 0, a: 1 };
+  return {
+    r: parseInt(m[1], 16) / 255,
+    g: parseInt(m[2], 16) / 255,
+    b: parseInt(m[3], 16) / 255,
+    a: 1,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DO NOT MODIFY BELOW THIS LINE — TEMPLATE ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+(async function () {
+  "use strict";
+
+  // Uniform buffer layout (shared):
+  //   time: f32  @ 0
+  //   resolution: vec2<f32> @ 8  (aligned to 8)
+  //   seed: f32  @ 16
+  //   count: u32 @ 20
+  //   dt: f32    @ 24
+  //   pad: 3*f32 @ 28 (rounding to 32 bytes total + vec2 alignment)
+  // In practice we pack: [time, _pad, resX, resY, seed, count, dt, _pad] → 32 bytes.
+
+  if (!window.paramValues) window.paramValues = {};
+  const paramValues = window.paramValues;
+  let currentSeed = 12345;
+  let isPaused = false;
+
+  window.seededRandom = mulberry32(currentSeed);
+
+  let device = null;
+  let context = null;
+  let format = null;
+  let canvas = null;
+  let state = null;
+  let uniformBuffer = null;
+  let animationId = null;
+  let startTime = 0;
+  let lastTime = 0;
+
+  function buildControls() {
+    for (const key in PARAMS) paramValues[key] = PARAMS[key].value;
+    const container = document.getElementById("param-sections");
+    container.innerHTML = "";
+    const folders = {};
+    for (const key in PARAMS) {
+      const folder = PARAMS[key].folder || "General";
+      (folders[folder] = folders[folder] || []).push(key);
+    }
+    for (const folderName in folders) {
+      const section = document.createElement("div");
+      section.className = "ctrl-section";
+      section.innerHTML = `<h3>${folderName}</h3>`;
+      for (const key of folders[folderName]) {
+        const p = PARAMS[key];
+        const group = document.createElement("div");
+        group.className = "ctrl-group";
+        const label = p.label || key;
+        if (p.options) {
+          const opts = p.options.map(o =>
+            `<option value="${o}"${o === p.value ? " selected" : ""}>${o}</option>`
+          ).join("");
+          group.innerHTML = `<label>${label}</label><select class="ctrl-select" data-key="${key}">${opts}</select>`;
+          group.querySelector("select").addEventListener("change", function () {
+            paramValues[key] = this.value;
+            if (p.rebuild) recreateSketch();
+          });
+        } else if (p.type === "color") {
+          group.innerHTML = `<label>${label}</label>
+            <div class="ctrl-row">
+              <input type="color" class="ctrl-color" data-key="${key}" value="${p.value}">
+              <span class="color-hex" id="hex-${key}">${p.value}</span>
+            </div>`;
+          group.querySelector("input").addEventListener("input", function () {
+            paramValues[key] = this.value;
+            document.getElementById("hex-" + key).textContent = this.value;
+          });
+        } else if (typeof p.value === "boolean") {
+          group.innerHTML = `<label><input type="checkbox" class="ctrl-check" data-key="${key}"${p.value ? " checked" : ""}> ${label}</label>`;
+          group.querySelector("input").addEventListener("change", function () {
+            paramValues[key] = this.checked;
+          });
+        } else {
+          group.innerHTML = `<label>${label}</label>
+            <div class="ctrl-row">
+              <input type="range" data-key="${key}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.value}">
+              <span class="ctrl-val" id="val-${key}">${p.value}</span>
+            </div>`;
+          group.querySelector("input").addEventListener("input", function () {
+            paramValues[key] = parseFloat(this.value);
+            document.getElementById("val-" + key).textContent = this.value;
+            // Count param changes require rebuilding the particle buffer
+            if (key === "count") recreateSketch();
+          });
+        }
+        section.appendChild(group);
+      }
+      container.appendChild(section);
+    }
+  }
+
+  async function initWebGPU() {
+    if (!navigator.gpu) {
+      showNoWebGPU("navigator.gpu is not defined — WebGPU is disabled in this browser.");
+      return false;
+    }
+    let adapter;
+    try {
+      adapter = await navigator.gpu.requestAdapter();
+    } catch (e) {
+      showNoWebGPU("requestAdapter() threw: " + e.message);
+      return false;
+    }
+    if (!adapter) {
+      showNoWebGPU("No compatible GPU adapter was returned.");
+      return false;
+    }
+    device = await adapter.requestDevice();
+    device.lost.then(info => {
+      showNoWebGPU("Device lost: " + info.message);
+    });
+
+    canvas = document.getElementById("gpu-canvas");
+    context = canvas.getContext("webgpu");
+    if (!context) {
+      showNoWebGPU("Could not get webgpu canvas context.");
+      return false;
+    }
+    format = navigator.gpu.getPreferredCanvasFormat();
+    configureCanvas();
+    return true;
+  }
+
+  function configureCanvas() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(window.innerWidth * dpr);
+    canvas.height = Math.floor(window.innerHeight * dpr);
+    context.configure({ device, format, alphaMode: "premultiplied" });
+  }
+
+  function showNoWebGPU(detail) {
+    const el = document.getElementById("no-webgpu");
+    el.style.display = "flex";
+    if (detail) {
+      document.getElementById("webgpu-error-detail").textContent = detail;
+    }
+  }
+
+  function createUniformBuffer() {
+    // 32 bytes — see layout comment above
+    uniformBuffer = device.createBuffer({
+      size: 32,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+  }
+
+  function writeUniforms(time, delta) {
+    const u = new ArrayBuffer(32);
+    const dv = new DataView(u);
+    // Offset 0: time (f32)
+    dv.setFloat32(0, time, true);
+    // Offset 8: resolution (vec2<f32>)
+    dv.setFloat32(8,  canvas.width, true);
+    dv.setFloat32(12, canvas.height, true);
+    // Offset 16: seed (f32)
+    dv.setFloat32(16, currentSeed, true);
+    // Offset 20: count (u32)
+    dv.setUint32(20, state ? state.count : 0, true);
+    // Offset 24: dt (f32)
+    dv.setFloat32(24, delta, true);
+    // Offset 28: pad
+    device.queue.writeBuffer(uniformBuffer, 0, u);
+  }
+
+  function recreateSketch() {
+    if (!device) return;
+    state = sketchSetup(device, context, format, paramValues, currentSeed, uniformBuffer);
+  }
+
+  function frame(timestamp) {
+    animationId = requestAnimationFrame(frame);
+    if (isPaused) return;
+    if (!state) return;
+
+    if (!startTime) startTime = timestamp;
+    const time = (timestamp - startTime) * 0.001;
+    const delta = Math.min((timestamp - (lastTime || timestamp)) * 0.001, 0.05);
+    lastTime = timestamp;
+
+    writeUniforms(time, delta);
+
+    const encoder = device.createCommandEncoder();
+    try {
+      computePass(device, encoder, state, paramValues, time, delta);
+    } catch (e) { console.error("computePass error:", e); }
+
+    const view = context.getCurrentTexture().createView();
+    try {
+      renderPass(device, encoder, view, state, paramValues, time, delta);
+    } catch (e) { console.error("renderPass error:", e); }
+
+    device.queue.submit([encoder.finish()]);
+  }
+
+  function applySeed(seed) {
+    currentSeed = seed;
+    document.getElementById("seed-input").value = seed;
+    window.seededRandom = mulberry32(currentSeed);
+    recreateSketch();
+    startTime = 0;
+    lastTime = 0;
+  }
+
+  async function exportPNG() {
+    if (!canvas) return;
+    // Render one more frame with preserve semantics — the configured canvas
+    // preserves the buffer until the next getCurrentTexture, so a toBlob
+    // immediately after frame() will capture the most recent submitted image.
+    canvas.toBlob(function (blob) {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = (SKETCH_META.title || "sketch") + "_seed" + currentSeed + ".png";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+  }
+
+  async function init() {
+    document.getElementById("display-title").textContent = SKETCH_META.title;
+    document.getElementById("display-concept").textContent = SKETCH_META.concept;
+    document.getElementById("sketch-title").textContent = SKETCH_META.title + " — WebGPU Algorithmic Art";
+
+    buildControls();
+
+    const ok = await initWebGPU();
+    if (!ok) return;
+    createUniformBuffer();
+    recreateSketch();
+
+    // Sidebar toggle
+    const sidebar = document.getElementById("sidebar");
+    document.getElementById("sidebar-toggle").addEventListener("click", () => sidebar.classList.toggle("open"));
+
+    // Seed controls
+    document.getElementById("seed-input").addEventListener("change", function () {
+      const v = parseInt(this.value);
+      if (v && v > 0) applySeed(v);
+    });
+    document.getElementById("btn-seed-prev").addEventListener("click", () => applySeed(Math.max(1, currentSeed - 1)));
+    document.getElementById("btn-seed-next").addEventListener("click", () => applySeed(currentSeed + 1));
+    document.getElementById("btn-seed-random").addEventListener("click", () => applySeed(Math.floor(Math.random() * 999999) + 1));
+
+    // Bottom bar
+    document.getElementById("btn-png").addEventListener("click", exportPNG);
+    document.getElementById("btn-pause").addEventListener("click", function () {
+      isPaused = !isPaused;
+      this.textContent = isPaused ? "Play" : "Pause";
+      if (!isPaused) { lastTime = 0; }
+    });
+    document.getElementById("btn-reset").addEventListener("click", () => applySeed(currentSeed));
+
+    // Resize
+    window.addEventListener("resize", function () {
+      configureCanvas();
+    });
+
+    requestAnimationFrame(frame);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Algorithmic Art Plugin for Claude Code
 
-Create algorithmic art as standalone files with interactive parameter controls and export capabilities. Supports six output modes spanning 2D, 3D, shaders, and compiled Rust.
+Create algorithmic art as standalone files with interactive parameter controls and export capabilities. Supports seven output modes spanning 2D, 3D, GLSL shaders, WebGPU compute, and compiled Rust.
 
 ## Installation
 
@@ -37,6 +37,7 @@ Skip the mode selection prompt by passing a mode as the first argument:
 /algorithmic-art:algorithmic-art p5 flow field with particle trails
 /algorithmic-art:algorithmic-art scene 3D generative sculpture
 /algorithmic-art:algorithmic-art thing perceptual color gradient art
+/algorithmic-art:algorithmic-art webgpu particle life swarm with 50000 particles
 ```
 
 | Mode Argument | Output |
@@ -45,6 +46,7 @@ Skip the mode selection prompt by passing a mode as the first argument:
 | `thing` | thi.ng (HTML, 2D) |
 | `scene` or `3d` | Three.js Scene (HTML, 3D) |
 | `shader` or `glsl` | Three.js Shader (HTML, GLSL) |
+| `webgpu` or `compute` or `wgsl` | WebGPU Compute + WGSL (HTML) |
 | `nannou` or `rust` | nannou 2D (Rust) |
 | `nannou3d` | nannou 3D (Rust) |
 
@@ -64,8 +66,22 @@ The skill declares its required tools (`Read`, `Write`, `Glob`, `Grep`, `WebSear
 | **thi.ng** | HTML (2D) | Perceptual color (Oklab/Oklch), 2D SDF composition, plotter-ready SVG, functional workflows |
 | **Three.js Scene** | HTML (3D) | 3D generative sculptures, procedural landscapes, particle systems with scene graph and OrbitControls |
 | **Three.js Shader** | HTML (GLSL) | Raymarching, PBR, volumetric rendering, 3D SDF fractals, ocean/terrain/atmosphere, GPU simulation, fullscreen shader art |
+| **WebGPU** | HTML (WGSL) | Compute shaders, WGSL, large-scale particle systems (Particle Life, MPM fluid), compute-heavy simulation that outgrows WebGL's ping-pong model |
 | **nannou 2D** | Rust | High-performance 2D creative coding, compiled applications, high-res print output |
 | **nannou 3D** | Rust | 3D generative art with wgpu, perspective camera, compiled performance |
+
+### WebGPU Mode Highlights
+
+The WebGPU mode enables work that WebGL cannot sustain:
+
+- **Compute + render pipeline** — three sketch hooks (`sketchSetup`, `computePass`, `renderPass`) for compute-driven simulation with instanced rendering
+- **WGSL shaders** — modern shading language with compute entry points, storage buffers, and atomic operations
+- **Large particle counts** — 100,000+ particles at 60fps on mid-range GPUs
+- **Particle Life** — asymmetric-force color-group swarms (predator-prey, orbit, membrane dynamics)
+- **MLS-MPM fluid** — particle-based fluid simulation with free surfaces, splashes, and droplets
+- **Graceful fallback** — shows a friendly message if WebGPU isn't available (Firefox currently requires a flag)
+
+Requires Chrome/Edge/Safari 17+ for default WebGPU support. Firefox users can enable `dom.webgpu.enabled` in `about:config`.
 
 ### thi.ng Mode Highlights
 
@@ -103,6 +119,10 @@ The thi.ng mode includes a built-in utility library (`tng`) with:
 | GPU particle systems | GPGPU particles via GPUComputationRenderer, texture-based simulation, curl noise forces |
 | Procedural geometry | Vertex modifiers (twist, taper, noise displace, spherify, extrude-along-curve) |
 | Analytic ray tracing | Exact ray-primitive intersection, refraction, reflection |
+| WebGPU compute | WGSL compute shaders, storage buffers, ping-pong compute, atomic P2G scatter writes |
+| MPM fluid | Material Point Method (MLS-MPM), particle-based fluid with splashes and free surfaces |
+| Particle Life | Asymmetric-force color-group swarms with species force matrix and emergent dynamics |
+| Plotter workflow | AxiDraw path planning (vpype/Saxi), pen/medium selection, multi-pass, watercolor-with-plotter |
 
 ## Features
 
@@ -122,12 +142,14 @@ For Three.js Shader mode, the skill includes an intent-based routing table that 
 - "glass spheres with refraction" routes to analytic-raytracing + shaders-glsl + post-processing
 - "ink drawing of geometric forms" routes to line-art-contours + threejs-3d + post-processing
 - "cel shaded cartoon scene" routes to line-art-contours (toon + outlines) + threejs-3d
+- "particle life" or "asymmetric swarm" routes through WebGPU mode to particle-life + webgpu-compute + color-science
+- "MPM fluid" or "particle fluid" routes through WebGPU mode to mpm-fluid + webgpu-compute
 
-Quick recipes compose multiple techniques for common goals like photorealistic SDF scenes, procedural landscapes, GPU simulation art, organic forms, abstract shader art, line art / ink drawings, and toon / cel shaded scenes.
+Quick recipes compose multiple techniques for common goals like photorealistic SDF scenes, procedural landscapes, GPU simulation art, organic forms, abstract shader art, line art / ink drawings, toon / cel shaded scenes, large-scale WebGPU particle simulations, and plotted hybrid pieces.
 
 ## Reference Library
 
-The skill includes 32 deep reference files covering:
+The skill includes 36 deep reference files covering:
 
 **Algorithm families:**
 - **Color science** — Oklab/Oklch perceptual spaces, cosine gradient palettes, harmonic schemes
@@ -159,10 +181,22 @@ The skill includes 32 deep reference files covering:
 - **GPU particles** — GPGPU particle systems via GPUComputationRenderer, Verlet integration, attractor forces, curl noise flow fields
 - **Superformula** — Gielis parametric equation for organic shapes (starfish, flowers, gears, blobs), 2D/3D implementations, parameter morphing presets
 
+**WebGPU / compute techniques:**
+- **WebGPU compute** — WGSL primer, compute pipeline model, storage buffers, uniform buffer layout, atomic P2G pattern, library ecosystem (POINTS, Three.js TSL, Slang)
+- **MPM fluid** — Material Point Method / MLS-MPM for particle-based fluid, 5-pass frame structure, quadratic B-spline weights, fluid/elastic/plastic constitutive models
+- **Particle Life** — Asymmetric-force color-group swarms with force-matrix presets (predator-prey, orbit, membrane, swarm), O(N²) and spatial-hash scaling
+
+**Hybrid digital/analog:**
+- **Plotter workflow** — AxiDraw path planning with vpype/Saxi, pen/medium selection (fineliner, brush, fountain, gel, paint, dip), multi-pass color, watercolor-with-plotter, riso integration, contemporary practitioners
+
 **Platform references:**
 - **thi.ng ecosystem** — Functional creative coding, composable tessellation, genart-api
 - **Three.js 3D** — Scene graph, geometry, materials, lighting, instanced meshes, procedural geometry modifiers (twist, taper, noise displace, extrude-along-curve)
 - **nannou 2D/3D** — Rust creative coding, wgpu pipelines, WGSL shaders
+
+## Contemporary Practitioners
+
+The `sources.md` reference includes a curated roster of 2020s practitioners across long-form / on-chain (Tyler Hobbs, Matt DesLauriers, Zancan, William Mapan, Melissa Wiederrecht, ciphrd, Licia He), plotter / hybrid (LB Allix, CMD_DRAW, Medusa Gen, Barry Spencer, Reuben, Mechanic Art, Michelle Chandra / Dirt Alley Design), WebGPU / technical (Hector Arellano, matsuoka-601, Mustafa Ali, Absulit), and educators (Daniel Shiffman, Daniel Catt, Matt DesLauriers workshops, Frontend Masters). Used for art-historical context when producing pieces.
 
 ## License
 

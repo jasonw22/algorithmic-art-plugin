@@ -18,6 +18,8 @@ algorithmic and generative art. Organized by type.
 | *Vehicles: Experiments in Synthetic Psychology* | Valentino Braitenberg | Simple agents, complex behavior — philosophical foundation for agent art |
 | *10 PRINT CHR$(205.5+RND(1)); : GOTO 10* | Montfort et al. | Deep analysis of one line of generative code — cultural and technical |
 | *Generative Design* | Groß, Bohnacker, Laub, Lazzeroni | Comprehensive creative coding reference — color, shape, type, image, noise, oscillation. Ported to nannou (see below) |
+| *Tracing the Line* | Generative Hut (ed.) | 100-artist anthology of contemporary pen-plotter and drawing-machine work. Useful reference for how hybrid digital/analog practitioners present and document physical output |
+| *Meridian* | Matt DesLauriers | Long-form generative artwork + printed catalog (2021–2022). Pairs a code release with a physical book — canonical template for the "code + printed object" format |
 
 ## Papers
 
@@ -45,6 +47,11 @@ algorithmic and generative art. Organized by type.
 - **The Book of Shaders** (thebookofshaders.com) — GPU-side procedural graphics (noise, patterns, SDF)
 - **Algorithmic Art** (algorithmicart.net) — Historical archive of early computer art
 - **Paul Bourke's Pages** (paulbourke.net) — Encyclopedic reference for fractals, attractors, and geometry
+- **Codrops** (tympanus.net/codrops) — Deep technical tutorials on creative web rendering. Their 2025 WebGPU review surveys the current state of browser GPU compute for creative coding
+- **Generative Hut** (generativehut.com) — Publications, interviews, and community for generative art with a strong plotter/hybrid focus. Publisher of *Tracing the Line*
+- **Pen Plotter Artwork** (penplotterartwork.com) — Artist profiles and plotter-specific tutorials
+- **UUNA TEK** (uunatek.com) — Drawing-machine manufacturer that curates detailed lists of contemporary plotter artists and techniques
+- **Dirt Alley Design** (dirtalleydesign.com) — Michelle Chandra's blog with very practical plotter tutorials: pen selection, watercolor-with-plotter, riso workflows, plotter-to-print pipelines
 - **nannou Examples** (github.com/nannou-org/nannou/tree/master/examples) — Official nannou
   examples covering draw API, textures, blend modes, hi-res capture, wgpu compute shaders,
   and templates. Essential reference for nannou-mode sketches.
@@ -62,6 +69,10 @@ algorithmic and generative art. Organized by type.
 - **The Nature of Code** (Kadenze / YouTube) — Daniel Shiffman
 - **Creative Coding with p5.js** (Domestika) — Various instructors
 - **Generative Art & Computational Creativity** (Coursera/edX) — Various universities
+- **Frontend Masters — Creative Coding with Canvas & WebGL** (Matt DesLauriers) — Browser-based generative art, code-as-tool framing
+- **Frontend Masters — Color Science for Designers & Developers** (Matt DesLauriers) — Perceptual color spaces, palette design — direct companion to `color-science.md`
+- **fxhash explainers** (Daniel Catt, ciphrd) — Approachable on-chain generative art tutorials published through fxhash's community channels
+- **Matt DesLauriers — open workshop repos** (github.com/mattdesl) — `workshop-generative-art` and `workshop-p5-intro` are de-facto starting points used by many educators
 
 ## Communities
 
@@ -90,6 +101,56 @@ algorithmic and generative art. Organized by type.
   Creator of toxiclibs (Java, used extensively in Processing community), thi.ng (TypeScript/
   Clojure), and author of influential work on functional approaches to computational geometry,
   SDF composition, and perceptual color science.
+
+## Contemporary Practitioners (2020s)
+
+A current roster for the art-historical-context step of the workflow. Named artists whose
+ongoing work is worth citing when explaining a piece's lineage or choosing influences for
+a new piece.
+
+### Long-form / on-chain generative
+
+- **Tyler Hobbs** (tylerxhobbs.com) — Flow fields, *Fidenza*, long-form generative essays; effectively named the "long-form generative art" category
+- **Matt DesLauriers** (mattdesl.com) — *Meridian*, *Pattern Language* (2024 — Åkle weaving–inspired installation), *The Sferic Project* (2023–ongoing — Earth's natural radio/atmospherics), *Sierra* (2024 — print + digital with Avant Arte); prolific writer and workshop author
+- **Zancan** — Procedural botanical work on Tezos; deep fidelity in simulated plant systems
+- **William Mapan** — Long-form on Art Blocks / fxhash; painterly generative systems
+- **Melissa Wiederrecht** — On-chain generative work; notable writer on the field
+- **ciphrd** (Baptiste Crespy) — Founder of fxhash; writes deep process pieces on the fxhash blog and Medium
+- **Licia He** (liciahe.com) — Pen-plot paintings created with custom code driving an AxiDraw as a painting instrument; explicit treatment of the plotter as performer
+
+### Plotter / hybrid digital-analog
+
+- **LB Allix** — Daily plotter output; consistent practice as a discipline
+- **CMD_DRAW** — Plotter combined with 3D and motion work
+- **Medusa Gen** — Large-format plotter abstraction
+- **Barry Spencer** — Generative typography paired with hand-crafted ceramics
+- **Reuben** — Brush pens on large-format plotters for painterly, human-feeling work
+- **Mechanic Art** — Plotter-based brush painting with watercolor/acrylic; custom software treating the plotter as an artistic instrument rather than the art itself ("plotter as instrument, not subject")
+- **Michelle Chandra — Dirt Alley Design** (dirtalleydesign.com) — Draws each print to order with a robotic drawing machine; designs inspired by patterns in the natural world. Commercial model for small-scale plotter practice
+
+### WebGPU / real-time technical
+
+- **Hector Arellano** — Pioneering WebGPU fluid-simulation work on the web
+- **matsuoka-601** — WebGPU fluid simulation at the cutting edge of what the browser can sustain (300k particles, real-time MLS-MPM)
+- **Mustafa Ali** — Node-based shader editors built on Three.js's WebGPU/TSL path
+- **Absulit** — Author of the POINTS library, a wrapper around WebGPU shader setup aimed at creative coders
+
+### Educators worth following (for workshop design)
+
+- **Daniel Shiffman** (thecodingtrain.com) — Still the gateway for most people coming from zero; *The Nature of Code*
+- **Daniel Catt** (revdancatt) — Generative artist publishing approachable explainers on fxhash
+- **Tyler Hobbs** — Essays rather than courses; "Flow Fields" and "Long-Form Generative Art" writeups have onboarded more people than many formal programs
+- **Matt DesLauriers** — Frontend Masters + open workshop repos; positions for both artists-curious-about-code and coders-curious-about-art
+- **Generative Hut / Pen Plotter Artwork** — Community-scale teaching; models for building an audience around a hybrid practice
+
+## Adjacent skills
+
+For techniques that bridge into AI-adjacent territory — radiance fields / NeRF, differentiable
+rendering, neural cellular automata, Slang (Khronos) shading language for neural graphics,
+CLIP-guided generation, diffusion-seeded simulations — see the sibling
+`generative-ai-art` skill. That skill handles compositions where an AI model is a first-class
+participant in the generation loop; this skill handles algorithmic art where math and code
+alone produce the image.
 
 ---
 
