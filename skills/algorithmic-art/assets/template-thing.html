@@ -100,14 +100,6 @@
   .btn-accent:hover { background: #c4613f; }
   .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .btn-row .btn { flex: 1; text-align: center; }
-
-  /* ---- Bottom bar ---- */
-  #bottom-bar {
-    position: fixed; bottom: 0; left: 0; width: 100%; z-index: 10;
-    display: flex; justify-content: center; gap: 8px; padding: 10px;
-    background: rgba(0,0,0,0.5);
-  }
-  #bottom-bar .btn { min-width: 80px; }
 </style>
 </head>
 <body>
@@ -135,14 +127,19 @@
 
   <!-- Parameter sections are generated here by the template engine -->
   <div id="param-sections"></div>
-</div>
 
-<!-- ── BOTTOM BAR ── -->
-<div id="bottom-bar">
-  <button class="btn" id="btn-png">Export PNG</button>
-  <button class="btn" id="btn-svg">Export SVG</button>
-  <button class="btn" id="btn-pause">Pause</button>
-  <button class="btn" id="btn-reset">Reset</button>
+  <!-- Actions section — always present -->
+  <div class="ctrl-section" id="section-actions">
+    <h3>Actions</h3>
+    <div class="btn-row">
+      <button class="btn" id="btn-pause">Pause</button>
+      <button class="btn" id="btn-reset">Reset</button>
+    </div>
+    <div class="btn-row" style="margin-top: 6px;">
+      <button class="btn" id="btn-png">Export PNG</button>
+      <button class="btn" id="btn-svg">Export SVG</button>
+    </div>
+  </div>
 </div>
 
 <script>

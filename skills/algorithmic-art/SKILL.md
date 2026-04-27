@@ -706,7 +706,7 @@ When using `p.createGraphics()` for offscreen buffers that you'll manipulate via
 
 ## Export Details
 
-The template provides PNG and SVG export buttons in the bottom bar.
+The template provides PNG and SVG export buttons in the sidebar's Actions section.
 
 - **PNG Export**: Uses `canvas.toBlob()` to capture the current frame. Works reliably for
   all canvas-based sketches.
