@@ -135,6 +135,8 @@ Identify whether the request maps to a known algorithm family or requires someth
 |-----------|--------------|
 | `color-science.md` | Perceptual color spaces (Oklab, LCH), cosine gradients, LCH theme generation, harmonic schemes, perceptual interpolation |
 | `sdf-2d.md` | 2D signed distance fields, smooth boolean operators, domain repetition/mirroring/polar symmetry, anti-aliased rendering |
+| `isosurface-extraction.md` | 3D SDFs → mesh via Naive Surface Nets (full implementation), TPMS catalog (gyroid, Schwarz P/D, Neovius), Mandelbulb, metaball/Voronoi implicits, CSG composition |
+| `gaussian-splats.md` | 3D Gaussian Splatting `.ply` format (degree-0 SH, 17 floats), direct algorithmic construction (Python), anisotropic frames from generators (attractors, flow fields, gradients), in-browser approximate rendering, tools that consume the format |
 | `thi-ng-ecosystem.md` | Functional creative coding patterns, composable tessellation, data-driven geometry, multi-target rendering, GenArt API parameter design |
 
 **Mode-specific references:**
@@ -162,6 +164,7 @@ Identify whether the request maps to a known algorithm family or requires someth
 | `webgl-pitfalls.md` | Three.js Shader | Precision issues, common bugs, visual debugging, mobile compatibility |
 | `nannou-3d.md` | nannou 3D | 3D perspective camera, 3D particles, wgpu pipelines, WGSL shaders, 3D attractors |
 | `line-art-contours.md` | Three.js Scene, Three.js Shader | Silhouette/crease/boundary extraction, screen-space edge detection, inverted-hull outlines, toon shading, SVG export, hatching |
+| `order-independent-transparency.md` | Three.js Scene (primarily) | Weighted Blended OIT (McGuire 2013), 6-phase pipeline with shared depth texture, alpha-depth pre-pass for additive occlusion, material variants (accum / reveal / depth-only), `renderer.render` override pattern |
 | `webgpu-compute.md` | WebGPU | WGSL primer, compute pipeline model, storage buffers, uniform buffer layout, template hook API, atomic P2G pattern |
 | `mpm-fluid.md` | WebGPU (primary); Three.js Shader (grid-based fluid alternative) | MLS-MPM particle fluid, 5-pass frame structure, quadratic B-spline weights, constitutive models, atomic P2G |
 | `particle-life.md` | WebGPU (primary); p5.js, nannou (CPU variants) | Asymmetric force matrix, species presets, O(N²) WGSL baseline, spatial hashing for large N |

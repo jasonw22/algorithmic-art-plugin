@@ -123,6 +123,9 @@ The thi.ng mode includes a built-in utility library (`tng`) with:
 | MPM fluid | Material Point Method (MLS-MPM), particle-based fluid with splashes and free surfaces |
 | Particle Life | Asymmetric-force color-group swarms with species force matrix and emergent dynamics |
 | Plotter workflow | AxiDraw path planning (vpype/Saxi), pen/medium selection, multi-pass, watercolor-with-plotter |
+| 3D isosurface extraction | Naive Surface Nets (full implementation), TPMS catalog (gyroid, Schwarz P/D, Neovius), Mandelbulb / Voronoi / metaball implicits, CSG composition |
+| 3D Gaussian Splats | Direct construction of `.ply` (degree-0 SH) from algorithmic generators (attractors, flow fields, gradients), anisotropic frames, in-browser approximate billboards |
+| Order-independent transparency | Weighted Blended OIT (McGuire 2013) for self-overlapping geometry and mixed alpha+additive scenes, depth-pre-pass for occlusion correctness |
 
 ## Features
 
@@ -149,7 +152,7 @@ Quick recipes compose multiple techniques for common goals like photorealistic S
 
 ## Reference Library
 
-The skill includes 36 deep reference files covering:
+The skill includes 40 deep reference files covering:
 
 **Algorithm families:**
 - **Color science** — Oklab/Oklch perceptual spaces, cosine gradient palettes, harmonic schemes
@@ -188,6 +191,11 @@ The skill includes 36 deep reference files covering:
 
 **Hybrid digital/analog:**
 - **Plotter workflow** — AxiDraw path planning with vpype/Saxi, pen/medium selection (fineliner, brush, fountain, gel, paint, dip), multi-pass color, watercolor-with-plotter, riso integration, contemporary practitioners
+
+**3D scene composition:**
+- **Isosurface extraction** — 3D scalar fields → mesh via Naive Surface Nets (~80 lines, no lookup tables), TPMS catalog (gyroid, Schwarz P/D, Neovius), quaternion fractals, Voronoi-based implicits, metaballs, CSG operators on SDFs
+- **Gaussian splats** — 3D Gaussian Splatting `.ply` format spec (17 floats, degree-0 SH), direct construction from algorithmic generators (attractor trajectories → ribbons, flow fields → streaks, SDF gradients → oriented fur), anisotropic frame patterns, in-browser approximate rendering, tools that consume the format (SuperSplat, mkkellogg, Babylon, Brush)
+- **Order-independent transparency** — Weighted Blended OIT (McGuire 2013) for mixing alpha-blended geometry with additive particles in self-overlapping scenes; 6-phase pipeline with shared depth texture, alpha-depth pre-pass for additive occlusion, material-variant pattern, `renderer.render` override technique
 
 **Platform references:**
 - **thi.ng ecosystem** — Functional creative coding, composable tessellation, genart-api
